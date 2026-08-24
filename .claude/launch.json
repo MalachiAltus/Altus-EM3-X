@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "em3x-dev",
+      "runtimeExecutable": "/private/tmp/claude-501/-Users-michael-Documents-Altus-EM3-X/31c4c862-8561-418f-80fe-0174e62048e2/scratchpad/run-dev.sh",
+      "runtimeArgs": [],
+      "port": 8081
+    },
+    {
+      "name": "em3x-web",
+      "runtimeExecutable": "/private/tmp/claude-501/-Users-michael-Documents-Altus-EM3-X/31c4c862-8561-418f-80fe-0174e62048e2/scratchpad/run-web.sh",
+      "runtimeArgs": [],
+      "port": 8081
+    }
+  ]
+}

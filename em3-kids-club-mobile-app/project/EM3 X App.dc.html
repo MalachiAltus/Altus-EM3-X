@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#12253F;font-family:'Barlow',system-ui,sans-serif;overflow:hidden}</style>
+</helmet>
+
+<div style="width:100vw;height:100vh;background:#12253F;position:relative;overflow:hidden;user-select:none" onTouchStart="{{ onTouchStart }}" onTouchMove="{{ onTouchMove }}" onTouchEnd="{{ onTouchEnd }}">
+
+  <div style="position:absolute;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:20px 28px;color:#fff">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <div style="font-family:'Barlow Condensed';font-weight:700;font-size:20px">EM3 X</div>
+      <div style="font-size:12.5px;opacity:0.6">{{ currentLabel }}</div>
+    </div>
+    <div style="font-size:12px;font-weight:700;opacity:0.7">{{ counterText }}</div>
+  </div>
+
+  <div style="display:flex;height:100%;width:100%;transform:{{ trackTransform }};transition:transform 0.42s cubic-bezier(.22,.61,.36,1)">
+
+    <!-- 1: LOG IN -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:32px 28px 36px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:flex-end">
+            <div style="display:flex;background:#EFEAE0;border-radius:20px;padding:3px">
+              <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ loginNormalBg }};color:{{ loginNormalFg }}" onClick="{{ setLoginNormal }}">Normal</div>
+              <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ loginErrorBg }};color:{{ loginErrorFg }}" onClick="{{ setLoginError }}">Error</div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:56px;height:56px;border-radius:16px;background:#1B3A63;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:700;font-size:20px;margin:0 auto 16px">EM3</div>
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:23px;color:#1F2430">Your shifts, records, and time off — all in one place</div>
+            <div style="color:#6B7280;font-size:13.5px;margin-top:10px;line-height:1.5">Check your rota, clock in, request leave, and keep your details up to date.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px">Email</div>
+              <div style="border:1.5px solid {{ loginBorder }};border-radius:12px;padding:14px 16px;font-size:15px;color:#1F2430;background:{{ loginFieldBg }}">kelly.shaw@em3kidsclub.co.uk</div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px">Password</div>
+              <div style="border:1.5px solid {{ loginBorder }};border-radius:12px;padding:14px 16px;font-size:15px;color:#1F2430;background:{{ loginFieldBg }}">••••••••••</div>
+            </div>
+          </div>
+          <sc-if value="{{ showLoginError }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FBE7E7;border-radius:12px;padding:12px 14px;font-size:13px;color:#8F2323;line-height:1.4">That email and password don't match. Try again or reset your password.</div>
+          </sc-if>
+          <div style="background:#D97843;color:#fff;text-align:center;padding:15px;border-radius:14px;font-weight:600;font-size:15px;box-shadow:0 8px 18px rgba(217,120,67,0.3)">Log In</div>
+          <div style="text-align:center;font-size:13px;color:#5B8A96;font-weight:600">Forgot password?</div>
+          <div style="text-align:center;font-size:12px;color:#9CA3AF">New here? Your manager will send you an invite.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2: HOME -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:22px 22px 0;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:23px;color:#1F2430">Hi Kelly, here's your week</div>
+            <div style="font-size:13px;color:#9CA3AF;margin-top:2px">James Campbell School</div>
+          </div>
+          <div style="background:#1B3A63;border-radius:20px;padding:20px;color:#fff">
+            <div style="font-size:12px;letter-spacing:0.5px;text-transform:uppercase;opacity:0.7;font-weight:600">Today · Tue 25 Aug</div>
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:19px;margin-top:6px">On shift since 09:02 — 2h 14m</div>
+            <div style="font-size:13px;opacity:0.8;margin-top:2px">Playworker · James Campbell Site</div>
+            <div style="background:#D97843;color:#fff;text-align:center;padding:13px;border-radius:12px;font-weight:600;font-size:14.5px;margin-top:16px">Clock Out</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#1F2430;margin-bottom:10px">This Week</div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ weekStrip }}" as="d" hint-placeholder-count="7">
+                <div style="flex:1;text-align:center;padding:10px 0;border-radius:12px;background:{{ d.bg }};color:{{ d.fg }}">
+                  <div style="font-size:10.5px;font-weight:700;opacity:0.7">{{ d.day }}</div>
+                  <div style="font-size:14px;font-weight:700;margin-top:2px">{{ d.date }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#FAF9F6;border:1px solid #E7E2DA;border-radius:18px;padding:16px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:700;color:#1F2430">Holiday balance</div>
+              <div style="display:flex;background:#EFEAE0;border-radius:20px;padding:3px">
+                <div style="padding:5px 10px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ zeroTabBg }};color:{{ zeroTabFg }}" onClick="{{ setZero }}">Zero-hrs</div>
+                <div style="padding:5px 10px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ fixedTabBg }};color:{{ fixedTabFg }}" onClick="{{ setFixed }}">Fixed</div>
+              </div>
+            </div>
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;color:#1B3A63">{{ balanceHeadline }}</div>
+            <div style="font-size:12.5px;color:#6B7280;margin-top:2px">{{ balanceSub }}</div>
+          </div>
+          <div style="background:#FBF1DC;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#E0A526;flex:none"></div>
+            <div style="font-size:13px;color:#8A6114;line-height:1.4">Your DBS check expires in 14 days — tap to update</div>
+          </div>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:4px">
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#1B3A63">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: ROTA -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:20px 22px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Rota</div>
+          <div style="display:flex;background:#EFEAE0;border-radius:20px;padding:3px;width:fit-content">
+            <div style="padding:6px 16px;border-radius:16px;font-size:12px;font-weight:700;background:#1B3A63;color:#fff">Week</div>
+            <div style="padding:6px 16px;border-radius:16px;font-size:12px;font-weight:600;color:#6B7280">Month</div>
+          </div>
+          <sc-for list="{{ rotaShifts }}" as="s" hint-placeholder-count="3">
+            <div style="border:1px solid #E7E2DA;border-radius:16px;padding:14px 16px;background:#FAF9F6">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <div style="font-size:13px;font-weight:700;color:#1F2430">{{ s.day }}</div>
+                <div style="font-size:12px;color:#9CA3AF">{{ s.date }}</div>
+              </div>
+              <div style="font-size:15px;font-weight:600;color:#1B3A63;margin-top:4px">{{ s.time }}</div>
+              <div style="font-size:12.5px;color:#6B7280;margin-top:1px">{{ s.role }}</div>
+              <div style="font-size:12px;font-weight:700;color:#5B8A96;margin-top:8px">{{ s.action }}</div>
+            </div>
+          </sc-for>
+          <div style="border:1px dashed #DFD9CC;border-radius:16px;padding:14px 16px;text-align:center;font-size:13px;color:#9CA3AF">Not published yet</div>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:4px">
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#1B3A63">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4: CLOCK IN/OUT -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:22px 22px 0;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center">
+          <div style="display:flex;background:#EFEAE0;border-radius:20px;padding:3px;align-self:flex-end">
+            <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ pinTabBg }};color:{{ pinTabFg }}" onClick="{{ setPinView }}">PIN entry</div>
+            <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;background:{{ successTabBg }};color:{{ successTabFg }}" onClick="{{ setSuccessView }}">Success</div>
+          </div>
+          <sc-if value="{{ showPinView }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="font-family:'Barlow Condensed';font-weight:700;font-size:38px;color:#1F2430;letter-spacing:1px">09:02</div>
+              <div style="font-size:12px;color:#9CA3AF;margin-top:2px">Tue 25 August</div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:#1F2430;margin-top:6px">Enter today's club code</div>
+            <div style="display:flex;gap:10px">
+              <div style="width:46px;height:54px;border:1.5px solid #1B3A63;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1F2430">4</div>
+              <div style="width:46px;height:54px;border:1.5px solid #1B3A63;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1F2430">8</div>
+              <div style="width:46px;height:54px;border:1.5px solid #E7E2DA;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1F2430"></div>
+              <div style="width:46px;height:54px;border:1.5px solid #E7E2DA;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1F2430"></div>
+            </div>
+            <div style="font-size:12px;color:#9CA3AF;line-height:1.4;padding:0 10px">Today's code is displayed at the sign-in desk. It changes every day.</div>
+            <div style="width:100%;background:#DFD9CC;color:#8A8477;text-align:center;padding:15px;border-radius:14px;font-weight:600;font-size:15px;margin-top:4px">Clock In</div>
+          </sc-if>
+          <sc-if value="{{ showSuccessView }}" hint-placeholder-val="{{ false }}">
+            <div style="width:60px;height:60px;border-radius:50%;background:#E7F5EC;display:flex;align-items:center;justify-content:center;margin-top:8px">
+              <div style="width:26px;height:26px;border-radius:50%;background:#2E9E5B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">✓</div>
+            </div>
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;color:#1F2430;margin-top:6px">Clocked in at 9:02 AM</div>
+            <div style="font-size:13px;color:#6B7280">Verified with today's club code</div>
+            <div style="background:#1B3A63;color:#fff;border-radius:16px;padding:16px;margin-top:14px;width:100%">
+              <div style="font-size:12px;opacity:0.7">On shift</div>
+              <div style="font-family:'Barlow Condensed';font-weight:700;font-size:19px;margin-top:2px">2h 14m</div>
+            </div>
+            <div style="width:100%;background:#D97843;color:#fff;text-align:center;padding:15px;border-radius:14px;font-weight:600;font-size:15px;margin-top:4px">Clock Out</div>
+          </sc-if>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:8px;width:100%">
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5: REQUEST TIME OFF -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:20px 22px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Request Time Off</div>
+          <div style="display:flex;gap:8px">
+            <div style="padding:8px 14px;border-radius:20px;background:#1B3A63;color:#fff;font-size:12.5px;font-weight:700">Holiday</div>
+            <div style="padding:8px 14px;border-radius:20px;background:#F1EEE6;color:#6B7280;font-size:12.5px;font-weight:600">Sick</div>
+            <div style="padding:8px 14px;border-radius:20px;background:#F1EEE6;color:#6B7280;font-size:12.5px;font-weight:600">Unpaid</div>
+          </div>
+          <div style="border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;font-size:14px;color:#1F2430;display:flex;justify-content:space-between">
+            <span>Mon 12 Oct — Tue 13 Oct</span><span style="color:#9CA3AF">📅</span>
+          </div>
+          <div style="border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;font-size:13px;color:#9CA3AF">Anything your manager should know?</div>
+          <div style="background:#EAF2EF;border-radius:12px;padding:12px 14px;font-size:12.5px;color:#1B3A63;line-height:1.4">You have {{ balanceHeadline }} — this request uses {{ requestUses }}.</div>
+          <div style="background:#D97843;color:#fff;text-align:center;padding:15px;border-radius:14px;font-weight:600;font-size:15px">Submit Request</div>
+          <div style="font-size:13px;font-weight:700;color:#1F2430;margin-top:4px">Your requests</div>
+          <sc-for list="{{ absenceRequests }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F1EEE6">
+              <div style="font-size:13px;color:#1F2430">{{ r.range }}</div>
+              <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;background:{{ r.bg }};color:{{ r.fg }}">{{ r.status }}</div>
+            </div>
+          </sc-for>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:4px">
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#1B3A63">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6: MY RECORD -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:20px 22px 0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">My Record</div>
+            <div style="font-size:12px;font-weight:700;color:#5B8A96">Edit</div>
+          </div>
+          <div style="border:1px solid #E7E2DA;border-radius:16px;padding:14px 16px">
+            <div style="font-size:14px;font-weight:700;color:#1F2430">Kelly Shaw</div>
+            <div style="font-size:12.5px;color:#6B7280;margin-top:2px">Playworker · Zero-hours contract</div>
+            <div style="font-size:11.5px;color:#9CA3AF;margin-top:8px;line-height:1.4">Changes to your bank details or contract go to your manager for approval.</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:#1F2430;margin-top:4px">Qualifications &amp; training</div>
+          <sc-for list="{{ qualifications }}" as="q" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #E7E2DA;border-radius:14px;padding:12px 14px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:8px;height:8px;border-radius:50%;background:{{ q.dot }};flex:none"></div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#1F2430">{{ q.name }}</div>
+                  <div style="font-size:11.5px;color:{{ q.textColor }};margin-top:1px">{{ q.label }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+          <div style="background:#FBE7E7;border-radius:14px;padding:12px 14px">
+            <div style="font-size:12px;font-weight:700;color:#8F2323;margin-bottom:4px">Needs attention</div>
+            <div style="font-size:12px;color:#8F2323;line-height:1.4">Safeguarding — expired 4 Feb 2026. Paediatric First Aid — expires in 27 days.</div>
+          </div>
+          <div style="border:1.5px dashed #D9D2C4;border-radius:14px;padding:14px;text-align:center;font-size:12.5px;color:#9CA3AF">Upload certificate — photo or PDF</div>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:4px">
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#1B3A63">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7: NOTIFICATIONS -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:20px 22px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Notifications</div>
+          <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="5">
+            <div style="border-bottom:1px solid #F1EEE6;padding:12px 0">
+              <div style="font-size:13px;color:#1F2430;line-height:1.4">{{ n.text }}</div>
+              <div style="font-size:11.5px;color:#9CA3AF;margin-top:3px">{{ n.time }}</div>
+            </div>
+          </sc-for>
+          <div style="display:flex;justify-content:space-around;border-top:1px solid #EEE9DF;padding:14px 0 20px;margin-top:100px">
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Home</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Rota</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">Time Off</div>
+            <div style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF">My Record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8: SETTINGS -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 20px 40px;overflow:auto">
+      <div style="width:380px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #E7E2DA;flex:none">
+        <div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:12px;font-weight:600;color:#1F2430">
+          <span>9:41</span><span>●●●●&nbsp;&nbsp;5G&nbsp;&nbsp;100%</span>
+        </div>
+        <div style="padding:20px 22px 0;display:flex;flex-direction:column;gap:0">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430;margin-bottom:12px">Settings</div>
+          <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F1EEE6;font-size:14px;color:#1F2430">Notification preferences<span style="color:#C9C2B4">›</span></div>
+          <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F1EEE6;font-size:14px;color:#1F2430">Change password<span style="color:#C9C2B4">›</span></div>
+          <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F1EEE6;font-size:14px;color:#1F2430">Privacy Policy<span style="color:#C9C2B4">›</span></div>
+          <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F1EEE6;font-size:14px;color:#1F2430">Terms<span style="color:#C9C2B4">›</span></div>
+          <div style="margin-top:22px;background:#FBE7E7;border-radius:14px;padding:16px">
+            <div style="font-size:13px;font-weight:700;color:#8F2323;margin-bottom:4px">Delete Account</div>
+            <div style="font-size:11.5px;color:#8F2323;line-height:1.4">This permanently deletes your account and personal details. Your timesheet and payroll records are kept as long as the law requires. This can't be undone.</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="flex:1;text-align:center;background:#C23B3B;color:#fff;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Delete My Account</div>
+              <div style="flex:1;text-align:center;background:#F1EEE6;color:#1F2430;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Cancel</div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#C9C2B4;margin:20px 0">EM3 X v1.0.0 (build 12)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9: ADMIN DASHBOARD -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 40px 40px;overflow:auto">
+      <div style="width:100%;max-width:1000px">
+        <div style="display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;width:fit-content;box-shadow:0 12px 30px rgba(0,0,0,0.25);border:1px solid #E7E2DA;margin-bottom:20px">
+          <div style="padding:10px 20px;border-radius:11px;background:#1B3A63;color:#fff;font-size:13px;font-weight:700">Dashboard</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Rota</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Approvals</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Staff</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Reports</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,0.3);border:1px solid #E7E2DA;padding:32px">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:26px;color:#1F2430;margin-bottom:20px">Today at EM3</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px">
+            <div style="border:1px solid #E7E2DA;border-radius:16px;padding:18px">
+              <div style="font-size:13px;font-weight:700;color:#1F2430;margin-bottom:10px">On site now — 6 staff</div>
+              <sc-for list="{{ onSiteStaff }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:#4B5563;padding:5px 0">
+                  <span>{{ p.name }}</span><span style="color:#9CA3AF">{{ p.time }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="border:1px solid #E7E2DA;border-radius:16px;padding:18px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <div style="font-size:13px;font-weight:700;color:#1F2430">Pending approvals — 4</div>
+                <div style="background:#D97843;color:#fff;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:10px">Review</div>
+              </div>
+              <div style="font-size:12.5px;color:#6B7280;line-height:1.5">2 holiday requests, 1 sickness call-in, 1 shift swap awaiting your decision.</div>
+            </div>
+            <div style="border:1px solid #E7E2DA;border-radius:16px;padding:18px">
+              <div style="font-size:13px;font-weight:700;color:#1F2430;margin-bottom:10px">Compliance — 2 need attention</div>
+              <div style="font-size:12.5px;color:#8F2323;padding:4px 0">Ben Adeyemi — DBS expired 4 Feb</div>
+              <div style="font-size:12.5px;color:#8A6114;padding:4px 0">Priya Shah — Paediatric first aid expires in 21 days</div>
+            </div>
+            <div style="border:1px solid #E7E2DA;border-radius:16px;padding:18px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#1F2430">Today's club code</div>
+                  <div style="font-family:'Barlow Condensed';font-weight:700;font-size:28px;color:#1B3A63;margin-top:4px">4821</div>
+                </div>
+                <div style="background:#F1EEE6;color:#1F2430;font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:10px">Regenerate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10: ROTA BUILDER -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 40px 40px;overflow:auto">
+      <div style="width:100%;max-width:1000px">
+        <div style="display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;width:fit-content;box-shadow:0 12px 30px rgba(0,0,0,0.25);border:1px solid #E7E2DA;margin-bottom:20px">
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Dashboard</div>
+          <div style="padding:10px 20px;border-radius:11px;background:#1B3A63;color:#fff;font-size:13px;font-weight:700">Rota</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Approvals</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Staff</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Reports</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,0.3);border:1px solid #E7E2DA;padding:32px;overflow-x:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Rota Builder — Week of 25 Aug</div>
+            <div style="display:flex;gap:8px">
+              <div style="background:#F1EEE6;color:#1F2430;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px">Copy last week</div>
+              <div style="background:#F1EEE6;color:#1F2430;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px">Add shift</div>
+              <div style="background:#D97843;color:#fff;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px">Publish week</div>
+            </div>
+          </div>
+          <div style="background:#FBF1DC;border-radius:12px;padding:11px 14px;font-size:12.5px;color:#8A6114;margin-bottom:16px">2 shifts are below the required staffing ratio — <span style="font-weight:700;text-decoration:underline">Show me</span></div>
+          <div style="display:grid;grid-template-columns:120px repeat(7,1fr);gap:1px;background:#E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="background:#FAF9F6;padding:10px;font-size:11px;font-weight:700;color:#9CA3AF">STAFF</div>
+            <sc-for list="{{ builderDays }}" as="d" hint-placeholder-count="7">
+              <div style="background:#FAF9F6;padding:10px;font-size:11px;font-weight:700;color:#6B7280;text-align:center">{{ d }}</div>
+            </sc-for>
+            <sc-for list="{{ builderRows }}" as="row" hint-placeholder-count="4">
+              <div style="background:#fff;padding:10px;font-size:12px;font-weight:600;color:#1F2430;display:flex;align-items:center;grid-column:1 / -1;border-top:1px solid #F1EEE6">{{ row.name }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11: APPROVALS INBOX -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 40px 40px;overflow:auto">
+      <div style="width:100%;max-width:1000px">
+        <div style="display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;width:fit-content;box-shadow:0 12px 30px rgba(0,0,0,0.25);border:1px solid #E7E2DA;margin-bottom:20px">
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Dashboard</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Rota</div>
+          <div style="padding:10px 20px;border-radius:11px;background:#1B3A63;color:#fff;font-size:13px;font-weight:700">Approvals</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Staff</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Reports</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,0.3);border:1px solid #E7E2DA;padding:32px">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430;margin-bottom:6px">Approvals Inbox</div>
+          <div style="font-size:13px;color:#9CA3AF;margin-bottom:20px">Staff with an expired DBS aren't counted toward ratio.</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+            <div style="border:1.5px solid #2E9E5B;border-radius:16px;padding:18px;background:#F5FBF7">
+              <div style="font-size:12px;font-weight:700;color:#9CA3AF">Kelly Shaw · Holiday · 12–13 Oct</div>
+              <div style="background:#E7F5EC;color:#1F6B3D;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;margin:12px 0;line-height:1.4">Clear — staffing stays legal. 4 staff for 26 under-8s.</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;text-align:center;background:#2E9E5B;color:#fff;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Approve</div>
+                <div style="flex:1;text-align:center;background:#F1EEE6;color:#1F2430;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Decline</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #C23B3B;border-radius:16px;padding:18px;background:#FDF6F6">
+              <div style="font-size:12px;font-weight:700;color:#9CA3AF">Ben Adeyemi · Holiday · 14 Oct</div>
+              <div style="background:#FBE7E7;color:#8F2323;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;margin:12px 0;line-height:1.4">Approving this breaks the legal ratio on Tue 14 Oct. 3 staff for 26 under-8s — you need 4.</div>
+              <div style="font-size:11.5px;font-weight:700;color:#5B8A96;margin-bottom:10px;text-decoration:underline">Assign cover first</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;text-align:center;background:#DFD9CC;color:#8A8477;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Approve</div>
+                <div style="flex:1;text-align:center;background:#F1EEE6;color:#1F2430;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Decline</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #E0A526;border-radius:16px;padding:18px;background:#FEFBF3">
+              <div style="font-size:12px;font-weight:700;color:#9CA3AF">Priya Shah · Holiday · 16 Oct</div>
+              <div style="background:#FBF1DC;color:#8A6114;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;margin:12px 0;line-height:1.4">This leaves 2 staff for 24 juniors. Club policy is 1 to 10 — above policy but not illegal.</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;text-align:center;background:#2E9E5B;color:#fff;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Approve</div>
+                <div style="flex:1;text-align:center;background:#F1EEE6;color:#1F2430;padding:10px;border-radius:10px;font-size:12.5px;font-weight:700">Decline</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12: STAFF DIRECTORY / SCR -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 40px 40px;overflow:auto">
+      <div style="width:100%;max-width:1080px">
+        <div style="display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;width:fit-content;box-shadow:0 12px 30px rgba(0,0,0,0.25);border:1px solid #E7E2DA;margin-bottom:20px">
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Dashboard</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Rota</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Approvals</div>
+          <div style="padding:10px 20px;border-radius:11px;background:#1B3A63;color:#fff;font-size:13px;font-weight:700">Staff</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Reports</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,0.3);border:1px solid #E7E2DA;padding:32px;overflow-x:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Single Central Record</div>
+            <div style="background:#1B3A63;color:#fff;font-size:12px;font-weight:700;padding:10px 16px;border-radius:10px">Export SCR (PDF)</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <div style="padding:7px 14px;border-radius:16px;background:#1B3A63;color:#fff;font-size:12px;font-weight:700">All</div>
+            <div style="padding:7px 14px;border-radius:16px;background:#F1EEE6;color:#6B7280;font-size:12px;font-weight:600">Expiring</div>
+            <div style="padding:7px 14px;border-radius:16px;background:#F1EEE6;color:#6B7280;font-size:12px;font-weight:600">Expired</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr 1fr;font-size:11px;font-weight:700;color:#9CA3AF;padding:0 4px 10px;border-bottom:1px solid #E7E2DA">
+            <div>NAME</div><div>ROLE</div><div>DBS</div><div>PAED. FA</div><div>FIRST AID</div><div>SAFEGUARDING</div>
+          </div>
+          <sc-for list="{{ staffDirectory }}" as="st" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr 1fr;font-size:13px;color:#1F2430;padding:12px 4px;border-bottom:1px solid #F1EEE6;align-items:center">
+              <div style="font-weight:600">{{ st.name }}</div>
+              <div style="color:#6B7280;font-size:12.5px">{{ st.role }}</div>
+              <div><span style="background:{{ st.dbs.bg }};color:{{ st.dbs.fg }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:10px">{{ st.dbs.label }}</span></div>
+              <div><span style="background:{{ st.pfa.bg }};color:{{ st.pfa.fg }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:10px">{{ st.pfa.label }}</span></div>
+              <div><span style="background:{{ st.fa.bg }};color:{{ st.fa.fg }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:10px">{{ st.fa.label }}</span></div>
+              <div><span style="background:{{ st.sg.bg }};color:{{ st.sg.fg }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:10px">{{ st.sg.label }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13: REPORTS & PAYROLL -->
+    <div style="flex:0 0 100%;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:80px 40px 40px;overflow:auto">
+      <div style="width:100%;max-width:1080px">
+        <div style="display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;width:fit-content;box-shadow:0 12px 30px rgba(0,0,0,0.25);border:1px solid #E7E2DA;margin-bottom:20px">
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Dashboard</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Rota</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Approvals</div>
+          <div style="padding:10px 20px;border-radius:11px;color:#6B7280;font-size:13px;font-weight:600">Staff</div>
+          <div style="padding:10px 20px;border-radius:11px;background:#1B3A63;color:#fff;font-size:13px;font-weight:700">Reports</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;box-shadow:0 30px 70px rgba(0,0,0,0.3);border:1px solid #E7E2DA;padding:32px;overflow-x:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed';font-weight:700;font-size:22px;color:#1F2430">Reports &amp; Payroll Export</div>
+            <div style="display:flex;gap:8px">
+              <div style="background:#F1EEE6;color:#1F2430;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px">Export CSV</div>
+              <div style="background:#1B3A63;color:#fff;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px">Export PDF</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#6B7280;margin-bottom:16px">Period: <span style="font-weight:700;color:#1F2430">July 2026</span> · Holiday accrues at 12.07% of hours worked, posted at the end of each month.</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+            <div style="border:1px solid #E7E2DA;border-radius:14px;padding:16px">
+              <div style="font-size:11.5px;font-weight:700;color:#9CA3AF">TOTAL HOURS WORKED</div>
+              <div style="font-family:'Barlow Condensed';font-weight:700;font-size:24px;color:#1B3A63;margin-top:4px">1,204.5</div>
+            </div>
+            <div style="border:1px solid #E7E2DA;border-radius:14px;padding:16px">
+              <div style="font-size:11.5px;font-weight:700;color:#9CA3AF">HOLIDAY ACCRUED</div>
+              <div style="font-family:'Barlow Condensed';font-weight:700;font-size:24px;color:#1B3A63;margin-top:4px">145.4 hrs</div>
+            </div>
+            <div style="border:1px solid #E7E2DA;border-radius:14px;padding:16px">
+              <div style="font-size:11.5px;font-weight:700;color:#9CA3AF">HOLIDAY TAKEN</div>
+              <div style="font-family:'Barlow Condensed';font-weight:700;font-size:24px;color:#1B3A63;margin-top:4px">88.0 hrs</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:11px;font-weight:700;color:#9CA3AF;padding:0 4px 10px;border-bottom:1px solid #E7E2DA">
+            <div>NAME</div><div>CONTRACT</div><div>HOURS WORKED</div><div>ACCRUED</div><div>BALANCE</div>
+          </div>
+          <sc-for list="{{ payrollRows }}" as="pr" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:13px;color:#1F2430;padding:12px 4px;border-bottom:1px solid #F1EEE6">
+              <div style="font-weight:600">{{ pr.name }}</div>
+              <div style="color:#6B7280;font-size:12.5px">{{ pr.contract }}</div>
+              <div>{{ pr.hours }}</div>
+              <div>{{ pr.accrued }}</div>
+              <div style="font-weight:700;color:#1B3A63">{{ pr.balance }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:absolute;top:50%;left:14px;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;backdrop-filter:blur(6px)" onClick="{{ goPrev }}">‹</div>
+  <div style="position:absolute;top:50%;right:14px;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;backdrop-filter:blur(6px)" onClick="{{ goNext }}">›</div>
+
+  <div style="position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:center;gap:7px">
+    <sc-for list="{{ dots }}" as="dot" hint-placeholder-count="13">
+      <div style="width:{{ dot.size }};height:7px;border-radius:4px;background:{{ dot.color }};cursor:pointer;transition:all 0.25s" onClick="{{ dot.go }}"></div>
+    </sc-for>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { index: 0, contractMode: 'zero', clockView: 'success', loginState: 'normal', touchStartX: null, touchDeltaX: 0 };
+
+  slideLabels = ['Log In','Home','Rota','Clock In / Out','Request Time Off','My Record','Notifications','Settings','Admin Dashboard','Rota Builder','Approvals Inbox','Staff Directory / SCR','Reports & Payroll'];
+
+  componentDidMount() {
+    this._onKey = (e) => {
+      if (e.key === 'ArrowRight') this.goNext();
+      if (e.key === 'ArrowLeft') this.goPrev();
+    };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this._onKey);
+  }
+
+  goNext = () => this.setState(s => ({ index: Math.min(s.index + 1, this.slideLabels.length - 1) }));
+  goPrev = () => this.setState(s => ({ index: Math.max(s.index - 1, 0) }));
+  goTo = (i) => this.setState({ index: i });
+
+  onTouchStart = (e) => { this.setState({ touchStartX: e.touches[0].clientX, touchDeltaX: 0 }); };
+  onTouchMove = (e) => {
+    if (this.state.touchStartX == null) return;
+    this.setState({ touchDeltaX: e.touches[0].clientX - this.state.touchStartX });
+  };
+  onTouchEnd = () => {
+    const dx = this.state.touchDeltaX;
+    if (dx > 60) this.goPrev();
+    else if (dx < -60) this.goNext();
+    this.setState({ touchStartX: null, touchDeltaX: 0 });
+  };
+
+  renderVals() {
+    const zero = this.state.contractMode === 'zero';
+    const i = this.state.index;
+    const n = this.slideLabels.length;
+
+    return {
+      trackTransform: `translateX(calc(-${i * 100}% + ${this.state.touchDeltaX}px))`,
+      currentLabel: this.slideLabels[i],
+      counterText: `${i + 1} / ${n}`,
+      goNext: this.goNext,
+      goPrev: this.goPrev,
+      dots: this.slideLabels.map((_, idx) => ({
+        size: idx === i ? '22px' : '7px',
+        color: idx === i ? '#D97843' : 'rgba(255,255,255,0.35)',
+        go: () => this.goTo(idx)
+      })),
+
+      loginNormalBg: this.state.loginState === 'normal' ? '#1B3A63' : 'transparent',
+      loginNormalFg: this.state.loginState === 'normal' ? '#fff' : '#6B7280',
+      loginErrorBg: this.state.loginState === 'error' ? '#1B3A63' : 'transparent',
+      loginErrorFg: this.state.loginState === 'error' ? '#fff' : '#6B7280',
+      setLoginNormal: () => this.setState({ loginState: 'normal' }),
+      setLoginError: () => this.setState({ loginState: 'error' }),
+      showLoginError: this.state.loginState === 'error',
+      loginBorder: this.state.loginState === 'error' ? '#C23B3B' : '#E7E2DA',
+      loginFieldBg: this.state.loginState === 'error' ? '#FBE7E7' : '#FAF9F6',
+
+      zeroTabBg: zero ? '#1B3A63' : 'transparent',
+      zeroTabFg: zero ? '#fff' : '#6B7280',
+      fixedTabBg: !zero ? '#1B3A63' : 'transparent',
+      fixedTabFg: !zero ? '#fff' : '#6B7280',
+      setZero: () => this.setState({ contractMode: 'zero' }),
+      setFixed: () => this.setState({ contractMode: 'fixed' }),
+      balanceHeadline: zero ? '18.5 hours banked' : '12.5 days remaining',
+      balanceSub: zero ? 'You earn 12.07% of every hour you work' : 'of 28 days this leave year',
+      requestUses: zero ? '12 hours' : '2 days',
+
+      showPinView: this.state.clockView === 'pin',
+      showSuccessView: this.state.clockView === 'success',
+      pinTabBg: this.state.clockView === 'pin' ? '#1B3A63' : 'transparent',
+      pinTabFg: this.state.clockView === 'pin' ? '#fff' : '#6B7280',
+      successTabBg: this.state.clockView === 'success' ? '#1B3A63' : 'transparent',
+      successTabFg: this.state.clockView === 'success' ? '#fff' : '#6B7280',
+      setPinView: () => this.setState({ clockView: 'pin' }),
+      setSuccessView: () => this.setState({ clockView: 'success' }),
+
+      weekStrip: [
+        { day: 'Mon', date: '24', bg: '#F1EEE6', fg: '#6B7280' },
+        { day: 'Tue', date: '25', bg: '#D97843', fg: '#fff' },
+        { day: 'Wed', date: '26', bg: '#F1EEE6', fg: '#6B7280' },
+        { day: 'Thu', date: '27', bg: '#F1EEE6', fg: '#6B7280' },
+        { day: 'Fri', date: '28', bg: '#F1EEE6', fg: '#6B7280' },
+        { day: 'Sat', date: '29', bg: '#FAF9F6', fg: '#C9C2B4' },
+        { day: 'Sun', date: '30', bg: '#FAF9F6', fg: '#C9C2B4' }
+      ],
+
+      rotaShifts: [
+        { day: 'Tue', date: '25 Aug', time: '3:15 – 6:00 PM', role: 'Playworker · James Campbell Site', action: 'Request Swap' },
+        { day: 'Wed', date: '26 Aug', time: '3:15 – 6:00 PM', role: 'Playworker · James Campbell Site', action: 'Request Swap' },
+        { day: 'Thu', date: '27 Aug', time: '8:00 – 9:00 AM', role: 'Breakfast Club · James Campbell Site', action: 'Request Swap' }
+      ],
+
+      absenceRequests: [
+        { range: '22–23 Oct', status: 'Approved', bg: '#E7F5EC', fg: '#1F6B3D' },
+        { range: '2 Sep', status: 'Pending', bg: '#FBF1DC', fg: '#8A6114' },
+        { range: '14 Jul', status: 'Declined', bg: '#FBE7E7', fg: '#8F2323' }
+      ],
+
+      qualifications: [
+        { name: 'DBS Check', label: 'Valid until 12 Mar 2027', dot: '#2E9E5B', textColor: '#1F6B3D' },
+        { name: 'Paediatric First Aid', label: 'Expires in 27 days — 12 Mar 2026', dot: '#E0A526', textColor: '#8A6114' },
+        { name: 'First Aid', label: 'Valid until 4 Sep 2026', dot: '#2E9E5B', textColor: '#1F6B3D' },
+        { name: 'Safeguarding', label: "Expired 4 Feb 2026 — you can't be rostered", dot: '#C23B3B', textColor: '#8F2323' }
+      ],
+
+      notifications: [
+        { text: 'Your shift on Tue 14 Oct has changed to 3:15–6:00 PM', time: '2h ago' },
+        { text: 'Your holiday request for 22–23 Oct was approved', time: 'Yesterday' },
+        { text: 'Your paediatric first aid certificate expires in 14 days', time: '2 days ago' },
+        { text: "Ben accepted your swap for Fri 17 Oct — your manager has approved it", time: '3 days ago' },
+        { text: "You've used most of your holiday. 3.5 hours left this leave year.", time: '5 days ago' }
+      ],
+
+      onSiteStaff: [
+        { name: 'Kelly Shaw', time: '09:02' },
+        { name: 'Ben Adeyemi', time: '08:55' },
+        { name: 'Priya Shah', time: '09:10' }
+      ],
+
+      builderDays: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+      builderRows: [
+        { name: 'Kelly Shaw' }, { name: 'Ben Adeyemi' }, { name: 'Priya Shah' }, { name: 'Open shift' }
+      ],
+
+      staffDirectory: [
+        { name: 'Kelly Shaw', role: 'Playworker', dbs: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, pfa: { label: 'Expiring', bg: '#FBF1DC', fg: '#8A6114' }, fa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, sg: { label: 'Expired', bg: '#FBE7E7', fg: '#8F2323' } },
+        { name: 'Ben Adeyemi', role: 'Site Lead', dbs: { label: 'Expired', bg: '#FBE7E7', fg: '#8F2323' }, pfa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, fa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, sg: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' } },
+        { name: 'Priya Shah', role: 'Playworker', dbs: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, pfa: { label: 'Expiring', bg: '#FBF1DC', fg: '#8A6114' }, fa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, sg: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' } },
+        { name: 'Kemi Osinloye', role: 'Admin', dbs: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, pfa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, fa: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' }, sg: { label: 'Valid', bg: '#E7F5EC', fg: '#1F6B3D' } }
+      ],
+
+      payrollRows: [
+        { name: 'Kelly Shaw', contract: 'Zero-hours', hours: '96.5', accrued: '11.6 hrs', balance: '18.5 hrs' },
+        { name: 'Ben Adeyemi', contract: 'Fixed part-time', hours: '112.0', accrued: '1.1 days', balance: '12.5 days' },
+        { name: 'Priya Shah', contract: 'Zero-hours', hours: '84.0', accrued: '10.1 hrs', balance: '9.0 hrs' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
