@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DateDropdown } from '@/components/DateDropdown';
 import { useAbsenceRequests } from '@/hooks/useAbsenceRequests';
 import { useHolidayBalance } from '@/hooks/useHolidayBalance';
 import type { Tables } from '@/lib/supabase/types';
@@ -71,23 +72,11 @@ export default function HolidayScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionTitle}>Request Time Off</Text>
 
-        <Text style={styles.fieldLabel}>Dates (YYYY-MM-DD)</Text>
-        <View style={styles.dateRow}>
-          <TextInput
-            style={[styles.input, styles.dateInput]}
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="Start"
-            placeholderTextColor={colors.subtle}
-          />
-          <TextInput
-            style={[styles.input, styles.dateInput]}
-            value={endDate}
-            onChangeText={setEndDate}
-            placeholder="End"
-            placeholderTextColor={colors.subtle}
-          />
-        </View>
+        <Text style={styles.fieldLabel}>Start date</Text>
+        <DateDropdown value={startDate} onChange={setStartDate} />
+
+        <Text style={styles.fieldLabel}>End date</Text>
+        <DateDropdown value={endDate} onChange={setEndDate} />
 
         <TextInput
           style={styles.input}
@@ -181,8 +170,6 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.sm },
   sectionTitle: { ...type.h3, color: colors.ink, marginTop: spacing.md, marginBottom: spacing.xs },
   fieldLabel: { ...type.small, color: colors.muted, marginTop: spacing.xs },
-  dateRow: { flexDirection: 'row', gap: spacing.sm },
-  dateInput: { flex: 1 },
   input: {
     minHeight: minTapTarget,
     borderWidth: 1,
