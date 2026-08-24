@@ -12,14 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAbsenceRequests } from '@/hooks/useAbsenceRequests';
 import { useHolidayBalance } from '@/hooks/useHolidayBalance';
-import type { Enums, Tables } from '@/lib/supabase/types';
+import type { Tables } from '@/lib/supabase/types';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
-
-const TYPES: { value: Enums<'absence_type'>; label: string }[] = [
-  { value: 'holiday', label: 'Holiday' },
-  { value: 'sickness', label: 'Sick' },
-  { value: 'unpaid', label: 'Unpaid' },
-];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -31,10 +25,9 @@ const STATUS_STYLE: Record<Tables<'absence_requests'>['status'], { bg: string; f
 };
 
 export default function HolidayScreen() {
-  const { balance, loading: balanceLoading, refresh: refreshBalance } = useHolidayBalance();
+  const { balance, allowed, loading: balanceLoading, refresh: refreshBalance } = useHolidayBalance();
   const { requests, loading: requestsLoading, submit, cancel } = useAbsenceRequests();
 
-  const [type, setType] = useState<Enums<'absence_type'>>('holiday');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [hours, setHours] = useState('');
@@ -55,7 +48,7 @@ export default function HolidayScreen() {
     }
     setSubmitting(true);
     const { error: submitError } = await submit({
-      type,
+      type: 'holiday',
       start_date: startDate,
       end_date: endDate,
       hours: hoursNum,
@@ -77,20 +70,6 @@ export default function HolidayScreen() {
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionTitle}>Request Time Off</Text>
-
-        <View style={styles.segmentRow}>
-          {TYPES.map((t) => (
-            <Pressable
-              key={t.value}
-              onPress={() => setType(t.value)}
-              style={[styles.segment, type === t.value && styles.segmentActive]}
-            >
-              <Text style={[styles.segmentText, type === t.value && styles.segmentTextActive]}>
-                {t.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
 
         <Text style={styles.fieldLabel}>Dates (YYYY-MM-DD)</Text>
         <View style={styles.dateRow}>
@@ -126,6 +105,17 @@ export default function HolidayScreen() {
           placeholder="Anything your manager should know?"
           placeholderTextColor={colors.subtle}
         />
+
+        <View style={styles.allowedBox}>
+          {balanceLoading ? (
+            <ActivityIndicator color={colors.navy} />
+          ) : (
+            <>
+              <Text style={styles.allowedText}>Holiday hours allowed: {allowed}</Text>
+              <Text style={styles.allowedIcon}>☀️🏖️</Text>
+            </>
+          )}
+        </View>
 
         <View style={styles.balanceBox}>
           {balanceLoading ? (
@@ -190,19 +180,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.sm },
   sectionTitle: { ...type.h3, color: colors.ink, marginTop: spacing.md, marginBottom: spacing.xs },
-  segmentRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.sm },
-  segment: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  segmentActive: { backgroundColor: colors.navy, borderColor: colors.navy },
   fieldLabel: { ...type.small, color: colors.muted, marginTop: spacing.xs },
-  segmentText: { ...type.bodyBold, color: colors.muted },
-  segmentTextActive: { color: colors.white },
   dateRow: { flexDirection: 'row', gap: spacing.sm },
   dateInput: { flex: 1 },
   input: {
@@ -215,6 +193,16 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 16,
   },
+  allowedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.warningBg,
+    borderRadius: radii.md,
+    padding: spacing.md,
+  },
+  allowedText: { ...type.body, color: colors.ink },
+  allowedIcon: { fontSize: 20 },
   balanceBox: {
     backgroundColor: colors.skyTint,
     borderRadius: radii.md,

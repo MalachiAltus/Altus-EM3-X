@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useSession } from '@/lib/auth/SessionProvider';
-import { computeAccrual } from '@/lib/engine/accrual';
+import { computeAccrual, IRREGULAR_ACCRUAL_RATE } from '@/lib/engine/accrual';
 import { leaveYearBounds, round2, toISODate } from '@/lib/engine/dates';
 import { supabase } from '@/lib/supabase/client';
 
@@ -14,12 +14,16 @@ import { supabase } from '@/lib/supabase/client';
 export function useHolidayBalance() {
   const { session } = useSession();
   const [balance, setBalance] = useState(0);
+  // "Holiday hours allowed" — hours banked × 12.07%, shown alongside the
+  // balance as a quick-reference figure.
+  const [allowed, setAllowed] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const userId = session?.user?.id;
     if (!userId) {
       setBalance(0);
+      setAllowed(0);
       setLoading(false);
       return;
     }
@@ -60,7 +64,9 @@ export function useHolidayBalance() {
         yearToDateAccruedHours: 0,
       });
 
-      setBalance(round2(accruedHours - takenHours));
+      const irregularBalance = round2(accruedHours - takenHours);
+      setBalance(irregularBalance);
+      setAllowed(round2(irregularBalance * IRREGULAR_ACCRUAL_RATE));
       setLoading(false);
       return;
     }
@@ -72,7 +78,9 @@ export function useHolidayBalance() {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    setBalance(data?.running_balance ?? 0);
+    const ledgerBalance = data?.running_balance ?? 0;
+    setBalance(ledgerBalance);
+    setAllowed(round2(ledgerBalance * IRREGULAR_ACCRUAL_RATE));
     setLoading(false);
   }, [session?.user?.id]);
 
@@ -80,5 +88,5 @@ export function useHolidayBalance() {
     refresh();
   }, [refresh]);
 
-  return { balance, loading, refresh };
+  return { balance, allowed, loading, refresh };
 }
