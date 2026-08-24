@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -64,6 +65,11 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
+        <Image
+          source={require('../../../assets/images/em3-logo.png')}
+          style={styles.logo}
+          contentFit="contain"
+        />
         <Text style={styles.greeting}>Hi {firstName}</Text>
         <Text style={styles.org}>{org?.name ?? 'EM3'}</Text>
 
@@ -159,6 +165,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingTop: spacing.xl, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
+  logo: { width: 140, height: 119, alignSelf: 'center', marginBottom: spacing.xs },
   greeting: { ...type.h1, color: colors.navy },
   org: { ...type.body, color: colors.muted, marginTop: -spacing.sm },
   card: {
