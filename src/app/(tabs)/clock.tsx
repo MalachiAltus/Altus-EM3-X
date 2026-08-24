@@ -3,8 +3,13 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useClockStatus } from '@/hooks/useClockStatus';
+import { useTodayShift } from '@/hooks/useTodayShift';
 import { supabase } from '@/lib/supabase/client';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
+
+function formatShiftTime(time: string): string {
+  return time.slice(0, 5);
+}
 
 function useElapsed(sinceISO?: string) {
   const [now, setNow] = useState(Date.now());
@@ -26,9 +31,30 @@ function formatClockTime(iso: string): string {
 
 export default function ClockScreen() {
   const { lastEvent, isClockedIn, loading, refresh } = useClockStatus();
+  const {
+    shift: todayShift,
+    hasTimesheet: todayShiftLogged,
+    loading: todayShiftLoading,
+    logMissedShift,
+  } = useTodayShift();
   const [submitting, setSubmitting] = useState(false);
+  const [loggingMissed, setLoggingMissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missedShiftError, setMissedShiftError] = useState<string | null>(null);
+  const [missedShiftLogged, setMissedShiftLogged] = useState(false);
   const elapsed = useElapsed(isClockedIn ? lastEvent?.occurred_at : undefined);
+
+  async function handleLogMissedShift() {
+    setMissedShiftError(null);
+    setLoggingMissed(true);
+    const { error: logError } = await logMissedShift();
+    setLoggingMissed(false);
+    if (logError) {
+      setMissedShiftError(logError);
+      return;
+    }
+    setMissedShiftLogged(true);
+  }
 
   async function handleClockIn() {
     setError(null);
@@ -59,6 +85,21 @@ export default function ClockScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <View style={styles.shiftBox}>
+        <Text style={styles.shiftLabel}>Today&apos;s shift</Text>
+        {todayShiftLoading ? (
+          <ActivityIndicator color={colors.navy} />
+        ) : (
+          <Text style={styles.shiftValue}>
+            {todayShift
+              ? `${formatShiftTime(todayShift.start_time)} – ${formatShiftTime(todayShift.end_time)}${
+                  todayShift.role ? ` · ${todayShift.role}` : ''
+                }`
+              : 'N/A'}
+          </Text>
+        )}
+      </View>
+
       {isClockedIn && lastEvent ? (
         <View style={styles.centeredContent}>
           <View style={styles.checkCircle}>
@@ -88,6 +129,22 @@ export default function ClockScreen() {
           >
             {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Clock In</Text>}
           </Pressable>
+
+          {todayShift && !todayShiftLogged && !missedShiftLogged && (
+            <Pressable
+              onPress={handleLogMissedShift}
+              disabled={loggingMissed}
+              style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}
+            >
+              {loggingMissed ? (
+                <ActivityIndicator color={colors.navy} />
+              ) : (
+                <Text style={styles.secondaryButtonText}>Forgot to clock in? Log today&apos;s shift hours</Text>
+              )}
+            </Pressable>
+          )}
+          {missedShiftLogged && <Text style={styles.confirmText}>Shift hours logged — your manager can see this.</Text>}
+          {missedShiftError && <Text style={styles.error}>{missedShiftError}</Text>}
         </View>
       )}
     </SafeAreaView>
@@ -96,6 +153,14 @@ export default function ClockScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
+  shiftBox: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  shiftLabel: { ...type.small, color: colors.muted },
+  shiftValue: { ...type.bodyBold, color: colors.ink },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   centeredContent: {
     flex: 1,
@@ -135,4 +200,17 @@ const styles = StyleSheet.create({
   },
   buttonPressed: { backgroundColor: colors.blueDark },
   buttonText: { color: colors.white, ...type.bodyBold },
+  secondaryButton: {
+    minHeight: minTapTarget,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: spacing.md,
+  },
+  secondaryButtonPressed: { backgroundColor: colors.border },
+  secondaryButtonText: { color: colors.navy, ...type.bodyBold, textAlign: 'center' },
+  confirmText: { ...type.small, color: colors.success, textAlign: 'center' },
 });
