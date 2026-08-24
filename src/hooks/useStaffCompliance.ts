@@ -13,6 +13,7 @@ export interface StaffComplianceRow {
   paediatricFirstAid: QualificationStatus;
   firstAid: QualificationStatus;
   safeguarding: QualificationStatus;
+  qualifications: Tables<'qualifications'>[];
 }
 
 export function useStaffCompliance() {
@@ -23,7 +24,7 @@ export function useStaffCompliance() {
     setLoading(true);
     const [{ data: profiles }, { data: quals }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, role').eq('status', 'active').order('full_name'),
-      supabase.from('qualifications').select('staff_id, type, expires_on'),
+      supabase.from('qualifications').select('*'),
     ]);
 
     const today = toISODate(new Date());
@@ -39,6 +40,7 @@ export function useStaffCompliance() {
         paediatricFirstAid: statusFor('paediatric_first_aid'),
         firstAid: statusFor('first_aid'),
         safeguarding: statusFor('safeguarding'),
+        qualifications: mine,
       };
     });
     setStaff(rows);

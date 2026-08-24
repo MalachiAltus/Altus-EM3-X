@@ -1,6 +1,7 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { QualificationEditor } from '@/components/QualificationEditor';
 import { useMyRecord } from '@/hooks/useMyRecord';
 import { useProfile } from '@/hooks/useProfile';
 import { qualificationStatus, type QualificationStatus } from '@/lib/engine/compliance';
@@ -42,7 +43,7 @@ function statusText(status: QualificationStatus, expiresOn: string | null): stri
 
 export default function RecordScreen() {
   const { profile, loading: profileLoading } = useProfile();
-  const { contract, qualifications, loading: recordLoading } = useMyRecord();
+  const { contract, qualifications, loading: recordLoading, refresh: refreshRecord } = useMyRecord();
 
   if (profileLoading || recordLoading) {
     return (
@@ -102,6 +103,14 @@ export default function RecordScreen() {
                 .join('. ')}
             </Text>
           </View>
+        )}
+
+        {profile && (
+          <QualificationEditor
+            staffId={profile.id}
+            qualifications={qualifications}
+            onSaved={refreshRecord}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

@@ -1,6 +1,8 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { QualificationEditor } from '@/components/QualificationEditor';
 import { useStaffCompliance, type StaffComplianceRow } from '@/hooks/useStaffCompliance';
 import type { QualificationStatus } from '@/lib/engine/compliance';
 import { colors, radii, spacing, type } from '@/theme/tokens';
@@ -25,7 +27,8 @@ function Badge({ label, status }: { label: string; status: QualificationStatus }
 }
 
 export default function StaffDirectoryScreen() {
-  const { staff, loading } = useStaffCompliance();
+  const { staff, loading, refresh } = useStaffCompliance();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -39,20 +42,33 @@ export default function StaffDirectoryScreen() {
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Single Central Record</Text>
-        {staff.map((s: StaffComplianceRow) => (
-          <View key={s.id} style={styles.card}>
-            <View style={styles.headerRow}>
-              <Text style={styles.name}>{s.full_name}</Text>
-              <Text style={styles.role}>{ROLE_LABEL[s.role]}</Text>
+        {staff.map((s: StaffComplianceRow) => {
+          const expanded = expandedId === s.id;
+          return (
+            <View key={s.id} style={styles.card}>
+              <View style={styles.headerRow}>
+                <Text style={styles.name}>{s.full_name}</Text>
+                <Text style={styles.role}>{ROLE_LABEL[s.role]}</Text>
+              </View>
+              <View style={styles.badgeRow}>
+                <Badge label="DBS" status={s.dbs} />
+                <Badge label="Paed. FA" status={s.paediatricFirstAid} />
+                <Badge label="First Aid" status={s.firstAid} />
+                <Badge label="Safeguarding" status={s.safeguarding} />
+              </View>
+              <Pressable
+                onPress={() => setExpandedId(expanded ? null : s.id)}
+                hitSlop={8}
+                style={styles.editToggleTouch}
+              >
+                <Text style={styles.editToggle}>{expanded ? 'Hide edit form' : 'Edit qualification dates'}</Text>
+              </Pressable>
+              {expanded && (
+                <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} />
+              )}
             </View>
-            <View style={styles.badgeRow}>
-              <Badge label="DBS" status={s.dbs} />
-              <Badge label="Paed. FA" status={s.paediatricFirstAid} />
-              <Badge label="First Aid" status={s.firstAid} />
-              <Badge label="Safeguarding" status={s.safeguarding} />
-            </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -78,4 +94,6 @@ const styles = StyleSheet.create({
   badge: { borderRadius: radii.sm, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, minWidth: 80 },
   badgeLabel: { ...type.small, fontWeight: '700' },
   badgeStatus: { ...type.small },
+  editToggleTouch: { alignSelf: 'flex-start', marginTop: spacing.xs },
+  editToggle: { ...type.small, color: colors.blue, fontWeight: '700' },
 });
