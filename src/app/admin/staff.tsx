@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { QualificationEditor } from '@/components/QualificationEditor';
 import { useStaffCompliance, type StaffComplianceRow } from '@/hooks/useStaffCompliance';
+import { DEFAULT_STANDARD_DAY_HOURS } from '@/lib/engine/accrual';
 import type { QualificationStatus } from '@/lib/engine/compliance';
 import { colors, radii, spacing, type } from '@/theme/tokens';
 
@@ -12,6 +13,21 @@ const ROLE_LABEL: Record<string, string> = { staff: 'Playworker', manager: 'Mana
 function formatDob(dob: string | null): string {
   if (!dob) return 'Not set';
   return new Date(`${dob}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// A "day" here is a standard 8-hour working day (same assumption the
+// accrual engine uses), purely for a friendlier readout of large hour
+// totals — it has no bearing on pay or accrual calculations.
+function formatDaysHours(totalHours: number): string {
+  const days = Math.floor(totalHours / DEFAULT_STANDARD_DAY_HOURS);
+  const remainderHours = totalHours - days * DEFAULT_STANDARD_DAY_HOURS;
+  let hours = Math.floor(remainderHours);
+  let minutes = Math.round((remainderHours - hours) * 60);
+  if (minutes === 60) {
+    minutes = 0;
+    hours += 1;
+  }
+  return days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m`;
 }
 
 const STATUS_STYLE: Record<QualificationStatus, { bg: string; fg: string; label: string }> = {
@@ -73,11 +89,11 @@ export default function StaffDirectoryScreen() {
                   <View style={styles.statsRow}>
                     <View style={styles.statBox}>
                       <Text style={styles.statLabel}>Hours worked</Text>
-                      <Text style={styles.statValue}>{s.hoursWorked}h</Text>
+                      <Text style={styles.statValue}>{formatDaysHours(s.hoursWorked)}</Text>
                     </View>
                     <View style={styles.statBox}>
                       <Text style={styles.statLabel}>Holiday hours allowed</Text>
-                      <Text style={styles.statValue}>{s.holidayAllowed}h</Text>
+                      <Text style={styles.statValue}>{formatDaysHours(s.holidayAllowed)}</Text>
                     </View>
                     <View style={styles.statBox}>
                       <Text style={styles.statLabel}>Date of birth</Text>
