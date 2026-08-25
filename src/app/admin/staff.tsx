@@ -71,10 +71,6 @@ export default function StaffDirectoryScreen() {
                       <Text style={styles.statValue}>{s.hoursWorked}h</Text>
                     </View>
                     <View style={styles.statBox}>
-                      <Text style={styles.statLabel}>Holiday hours banked</Text>
-                      <Text style={styles.statValue}>{s.holidayBalance}h</Text>
-                    </View>
-                    <View style={styles.statBox}>
                       <Text style={styles.statLabel}>Holiday hours allowed</Text>
                       <Text style={styles.statValue}>{s.holidayAllowed}h</Text>
                     </View>
