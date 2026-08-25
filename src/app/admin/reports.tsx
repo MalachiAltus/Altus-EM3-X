@@ -5,10 +5,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { useReports } from '@/hooks/useReports';
+import { BIRTHDAY_REMINDER_DAYS, useUpcomingBirthdays } from '@/hooks/useUpcomingBirthdays';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
+function formatBirthday(dob: string): string {
+  return new Date(`${dob}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function birthdayLabel(daysAway: number): string {
+  if (daysAway === 0) return 'Today!';
+  if (daysAway === 1) return 'Tomorrow';
+  return `In ${daysAway} days`;
 }
 
 async function exportCsv(csv: string) {
@@ -35,6 +46,7 @@ async function exportCsv(csv: string) {
 export default function ReportsScreen() {
   const { rows, loading: reportsLoading, toCsv } = useReports();
   const { entries, loading: logLoading } = useAuditLog(30);
+  const { birthdays, loading: birthdaysLoading } = useUpcomingBirthdays();
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -61,6 +73,23 @@ export default function ReportsScreen() {
                 <Stat label="Taken" value={`${r.taken}h`} />
                 <Stat label="Balance" value={`${r.balance}h`} />
               </View>
+            </View>
+          ))
+        )}
+
+        <Text style={styles.sectionTitle}>Upcoming Birthdays</Text>
+        {birthdaysLoading ? (
+          <ActivityIndicator color={colors.navy} />
+        ) : birthdays.length === 0 ? (
+          <Text style={styles.emptyText}>No birthdays in the next {BIRTHDAY_REMINDER_DAYS} days.</Text>
+        ) : (
+          birthdays.map((b) => (
+            <View key={b.id} style={styles.birthdayRow}>
+              <View>
+                <Text style={styles.birthdayName}>{b.full_name}</Text>
+                <Text style={styles.birthdayDate}>{formatBirthday(b.dob)}</Text>
+              </View>
+              <Text style={styles.birthdayBadge}>{birthdayLabel(b.daysAway)}</Text>
             </View>
           ))
         )}
@@ -132,6 +161,18 @@ const styles = StyleSheet.create({
   statLabel: { ...type.small, color: colors.muted },
   sectionTitle: { ...type.h3, color: colors.ink, marginTop: spacing.md },
   emptyText: { ...type.body, color: colors.muted },
+  birthdayRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.skyTint,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  birthdayName: { ...type.bodyBold, color: colors.navy },
+  birthdayDate: { ...type.small, color: colors.muted },
+  birthdayBadge: { ...type.small, fontWeight: '700', color: colors.navy },
   logRow: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

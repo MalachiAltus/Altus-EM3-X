@@ -17,6 +17,7 @@ export interface StaffComplianceRow {
   qualifications: Tables<'qualifications'>[];
   hoursWorked: number;
   holidayAllowed: number;
+  dob: string | null;
 }
 
 export function useStaffCompliance() {
@@ -26,7 +27,7 @@ export function useStaffCompliance() {
   const refresh = useCallback(async () => {
     setLoading(true);
     const [{ data: profiles }, { data: quals }, { data: timesheets }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, role').eq('status', 'active').order('full_name'),
+      supabase.from('profiles').select('id, full_name, role, dob').eq('status', 'active').order('full_name'),
       supabase.from('qualifications').select('*'),
       supabase.from('timesheets').select('staff_id, worked_minutes'),
     ]);
@@ -55,6 +56,7 @@ export function useStaffCompliance() {
         qualifications: mine,
         hoursWorked,
         holidayAllowed: round2(hoursWorked * IRREGULAR_ACCRUAL_RATE),
+        dob: p.dob,
       };
     });
     setStaff(rows);

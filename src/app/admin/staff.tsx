@@ -9,6 +9,11 @@ import { colors, radii, spacing, type } from '@/theme/tokens';
 
 const ROLE_LABEL: Record<string, string> = { staff: 'Playworker', manager: 'Manager', admin: 'Admin' };
 
+function formatDob(dob: string | null): string {
+  if (!dob) return 'Not set';
+  return new Date(`${dob}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 const STATUS_STYLE: Record<QualificationStatus, { bg: string; fg: string; label: string }> = {
   valid: { bg: colors.successBg, fg: colors.success, label: 'Valid' },
   expiring: { bg: colors.warningBg, fg: colors.warning, label: 'Expiring' },
@@ -73,6 +78,10 @@ export default function StaffDirectoryScreen() {
                     <View style={styles.statBox}>
                       <Text style={styles.statLabel}>Holiday hours allowed</Text>
                       <Text style={styles.statValue}>{s.holidayAllowed}h</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>Date of birth</Text>
+                      <Text style={styles.statValue}>{formatDob(s.dob)}</Text>
                     </View>
                   </View>
                   <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} />

@@ -62,3 +62,14 @@ export function leaveYearBounds(
 export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
+
+/** Days from `asOfISO` to the next occurrence of `dob`'s month/day (0 if today is the birthday). */
+export function daysUntilNextBirthday(dob: string, asOfISO: string): number {
+  const asOf = parseISODate(asOfISO);
+  const birth = parseISODate(dob);
+  let next = new Date(Date.UTC(asOf.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
+  if (next.getTime() < asOf.getTime()) {
+    next = new Date(Date.UTC(asOf.getUTCFullYear() + 1, birth.getUTCMonth(), birth.getUTCDate()));
+  }
+  return daysBetween(asOf, next);
+}

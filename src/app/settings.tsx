@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DateDropdown } from '@/components/DateDropdown';
+import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabase/client';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
@@ -26,11 +28,21 @@ Clocking in or out on behalf of another staff member, or submitting false attend
 
 EM3 may suspend or remove access to the app for a staff member whose employment has ended or who has breached these terms. Continued use of the app after changes to these terms constitutes acceptance of them.`;
 
+const DOB_YEAR_RANGE: [number, number] = [1940, new Date().getFullYear() - 13];
+const DOB_FALLBACK = `${new Date().getFullYear() - 25}-01-01`;
+
 export default function SettingsScreen() {
+  const { profile, loading: profileLoading } = useProfile();
+
   const [newPassword, setNewPassword] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMessage, setPwMessage] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
+
+  const [dob, setDob] = useState('');
+  const [dobSaving, setDobSaving] = useState(false);
+  const [dobMessage, setDobMessage] = useState<string | null>(null);
+  const [dobError, setDobError] = useState<string | null>(null);
 
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -38,6 +50,24 @@ export default function SettingsScreen() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.dob) setDob(profile.dob);
+  }, [profile?.dob]);
+
+  async function handleSaveDob() {
+    if (!profile) return;
+    setDobMessage(null);
+    setDobError(null);
+    setDobSaving(true);
+    const { error } = await supabase.from('profiles').update({ dob }).eq('id', profile.id);
+    setDobSaving(false);
+    if (error) {
+      setDobError(error.message);
+      return;
+    }
+    setDobMessage('Date of birth updated.');
+  }
 
   async function handleChangePassword() {
     setPwMessage(null);
@@ -91,6 +121,24 @@ export default function SettingsScreen() {
         >
           {pwSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Update Password</Text>}
         </Pressable>
+
+        <Text style={styles.sectionTitle}>Date of birth</Text>
+        {profileLoading ? (
+          <ActivityIndicator color={colors.navy} />
+        ) : (
+          <>
+            <DateDropdown value={dob} onChange={setDob} fallback={DOB_FALLBACK} yearRange={DOB_YEAR_RANGE} />
+            {dobError && <Text style={styles.error}>{dobError}</Text>}
+            {dobMessage && <Text style={styles.success}>{dobMessage}</Text>}
+            <Pressable
+              onPress={handleSaveDob}
+              disabled={dobSaving}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              {dobSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Save Date of Birth</Text>}
+            </Pressable>
+          </>
+        )}
 
         <Pressable style={styles.row} onPress={() => setShowPrivacy((v) => !v)}>
           <Text style={styles.rowText}>Privacy Policy</Text>
