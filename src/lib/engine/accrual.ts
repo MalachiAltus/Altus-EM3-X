@@ -26,6 +26,23 @@ export const STATUTORY_CAP_DAYS = 28;
 // Override `standardDayHours` if EM3's typical shift length differs.
 export const DEFAULT_STANDARD_DAY_HOURS = 8;
 
+/**
+ * Friendlier readout of an hours total as "Xd Yh Zm" (or "Yh Zm" under a
+ * day), using the same 8-hour standard-day assumption as the accrual cap
+ * above. Display only — has no bearing on pay or accrual calculations.
+ */
+export function formatHoursAsDaysHours(totalHours: number, dayHours: number = DEFAULT_STANDARD_DAY_HOURS): string {
+  const days = Math.floor(totalHours / dayHours);
+  const remainderHours = totalHours - days * dayHours;
+  let hours = Math.floor(remainderHours);
+  let minutes = Math.round((remainderHours - hours) * 60);
+  if (minutes === 60) {
+    minutes = 0;
+    hours += 1;
+  }
+  return days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m`;
+}
+
 export interface IrregularAccrualInput {
   contractType: 'irregular';
   /** Hours actually worked in this pay period (from timesheets). */

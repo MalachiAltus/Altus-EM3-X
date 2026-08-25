@@ -64,7 +64,7 @@ export default function RotaScreen() {
   async function handlePublish() {
     setPublishMsg(null);
     const { error: publishError } = await publishWeek();
-    setPublishMsg(publishError ?? 'Published.');
+    setPublishMsg(publishError ?? 'Assigned.');
   }
 
   if (loading) {
@@ -93,7 +93,7 @@ export default function RotaScreen() {
             onPress={handlePublish}
             style={({ pressed }) => [styles.publishButton, pressed && styles.buttonPressed]}
           >
-            <Text style={styles.publishButtonText}>Publish</Text>
+            <Text style={styles.publishButtonText}>Assign</Text>
           </Pressable>
         </View>
         {publishMsg && <Text style={styles.publishMsg}>{publishMsg}</Text>}

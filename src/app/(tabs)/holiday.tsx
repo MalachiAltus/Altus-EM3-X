@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DateDropdown } from '@/components/DateDropdown';
 import { useAbsenceRequests } from '@/hooks/useAbsenceRequests';
 import { useHolidayBalance } from '@/hooks/useHolidayBalance';
+import { formatHoursAsDaysHours } from '@/lib/engine/accrual';
 import type { Tables } from '@/lib/supabase/types';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
@@ -100,7 +101,7 @@ export default function HolidayScreen() {
             <ActivityIndicator color={colors.navy} />
           ) : (
             <>
-              <Text style={styles.allowedText}>Holiday hours allowed: {allowed}</Text>
+              <Text style={styles.allowedText}>Holiday hours allowed: {formatHoursAsDaysHours(allowed)}</Text>
               <Text style={styles.allowedIcon}>☀️🏖️</Text>
             </>
           )}
@@ -111,7 +112,7 @@ export default function HolidayScreen() {
             <ActivityIndicator color={colors.navy} />
           ) : (
             <Text style={styles.balanceText}>
-              You have {balance} hours banked
+              You have {formatHoursAsDaysHours(balance)} banked
               {hours && !Number.isNaN(Number(hours)) ? ` — this request uses ${hours} hours.` : '.'}
             </Text>
           )}
