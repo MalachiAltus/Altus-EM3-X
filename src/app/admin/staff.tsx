@@ -61,10 +61,22 @@ export default function StaffDirectoryScreen() {
                 hitSlop={8}
                 style={styles.editToggleTouch}
               >
-                <Text style={styles.editToggle}>{expanded ? 'Hide edit form' : 'Edit qualification dates'}</Text>
+                <Text style={styles.editToggle}>{expanded ? '▲ Hide details' : '▼ Show details'}</Text>
               </Pressable>
               {expanded && (
-                <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} />
+                <>
+                  <View style={styles.statsRow}>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>Hours worked</Text>
+                      <Text style={styles.statValue}>{s.hoursWorked}h</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>Holiday hours allowed</Text>
+                      <Text style={styles.statValue}>{s.holidayAllowed}h</Text>
+                    </View>
+                  </View>
+                  <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} />
+                </>
               )}
             </View>
           );
@@ -96,4 +108,14 @@ const styles = StyleSheet.create({
   badgeStatus: { ...type.small },
   editToggleTouch: { alignSelf: 'flex-start', marginTop: spacing.xs },
   editToggle: { ...type.small, color: colors.blue, fontWeight: '700' },
+  statsRow: { flexDirection: 'row', gap: spacing.sm },
+  statBox: {
+    flex: 1,
+    backgroundColor: colors.skyTint,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    gap: 2,
+  },
+  statLabel: { ...type.small, color: colors.muted },
+  statValue: { ...type.bodyBold, color: colors.navy },
 });
