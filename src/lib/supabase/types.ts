@@ -280,6 +280,7 @@ export type Database = {
           emergency_contact_phone: string | null
           full_name: string
           id: string
+          is_permanent: boolean
           leave_date: string | null
           phone: string | null
           role: Database["public"]["Enums"]["staff_role"]
@@ -292,6 +293,7 @@ export type Database = {
           emergency_contact_phone?: string | null
           full_name: string
           id: string
+          is_permanent?: boolean
           leave_date?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
@@ -304,6 +306,7 @@ export type Database = {
           emergency_contact_phone?: string | null
           full_name?: string
           id?: string
+          is_permanent?: boolean
           leave_date?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
@@ -695,6 +698,7 @@ export type Database = {
         Returns: {
           full_name: string
           id: string
+          is_permanent: boolean
           role: Database["public"]["Enums"]["staff_role"]
         }[]
       }

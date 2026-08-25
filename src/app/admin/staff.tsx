@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { QualificationEditor } from '@/components/QualificationEditor';
 import { useStaffCompliance, type StaffComplianceRow } from '@/hooks/useStaffCompliance';
+import { setStaffPermanent } from '@/hooks/useTogglePermanentStaff';
 import { formatHoursAsDaysHours } from '@/lib/engine/accrual';
 import type { QualificationStatus } from '@/lib/engine/compliance';
 import { colors, radii, spacing, type } from '@/theme/tokens';
@@ -35,6 +36,20 @@ function Badge({ label, status }: { label: string; status: QualificationStatus }
 export default function StaffDirectoryScreen() {
   const { staff, loading, refresh } = useStaffCompliance();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [permanentError, setPermanentError] = useState<{ id: string; message: string } | null>(null);
+
+  async function handleTogglePermanent(s: StaffComplianceRow) {
+    setPermanentError(null);
+    setTogglingId(s.id);
+    const { error } = await setStaffPermanent(s.id, !s.isPermanent);
+    setTogglingId(null);
+    if (error) {
+      setPermanentError({ id: s.id, message: error });
+      return;
+    }
+    await refresh();
+  }
 
   if (loading) {
     return (
@@ -62,13 +77,29 @@ export default function StaffDirectoryScreen() {
                 <Badge label="First Aid" status={s.firstAid} />
                 <Badge label="Safeguarding" status={s.safeguarding} />
               </View>
-              <Pressable
-                onPress={() => setExpandedId(expanded ? null : s.id)}
-                hitSlop={8}
-                style={styles.editToggleTouch}
-              >
-                <Text style={styles.editToggle}>{expanded ? '▲ Hide details' : '▼ Show details'}</Text>
-              </Pressable>
+              <View style={styles.bottomRow}>
+                <Pressable
+                  onPress={() => setExpandedId(expanded ? null : s.id)}
+                  hitSlop={8}
+                  style={styles.editToggleTouch}
+                >
+                  <Text style={styles.editToggle}>{expanded ? '▲ Hide details' : '▼ Show details'}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleTogglePermanent(s)}
+                  disabled={togglingId === s.id}
+                  style={[styles.permanentButton, s.isPermanent && styles.permanentButtonActive]}
+                >
+                  {togglingId === s.id ? (
+                    <ActivityIndicator size="small" color={s.isPermanent ? colors.white : colors.navy} />
+                  ) : (
+                    <Text style={[styles.permanentButtonText, s.isPermanent && styles.permanentButtonTextActive]}>
+                      {s.isPermanent ? 'Permanent ✓' : 'Make Permanent'}
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+              {permanentError?.id === s.id && <Text style={styles.error}>{permanentError.message}</Text>}
               {expanded && (
                 <>
                   <View style={styles.statsRow}>
@@ -116,8 +147,28 @@ const styles = StyleSheet.create({
   badge: { borderRadius: radii.sm, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, minWidth: 80 },
   badgeLabel: { ...type.small, fontWeight: '700' },
   badgeStatus: { ...type.small },
-  editToggleTouch: { alignSelf: 'flex-start', marginTop: spacing.xs },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  editToggleTouch: {},
   editToggle: { ...type.small, color: colors.blue, fontWeight: '700' },
+  permanentButton: {
+    minHeight: 32,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  permanentButtonActive: { backgroundColor: colors.success, borderColor: colors.success },
+  permanentButtonText: { ...type.small, color: colors.ink, fontWeight: '700' },
+  permanentButtonTextActive: { color: colors.white },
+  error: { ...type.small, color: colors.danger },
   statsRow: { flexDirection: 'row', gap: spacing.sm },
   statBox: {
     flex: 1,

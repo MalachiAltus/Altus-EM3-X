@@ -18,6 +18,7 @@ export interface StaffComplianceRow {
   hoursWorked: number;
   holidayAllowed: number;
   dob: string | null;
+  isPermanent: boolean;
 }
 
 export function useStaffCompliance() {
@@ -27,7 +28,7 @@ export function useStaffCompliance() {
   const refresh = useCallback(async () => {
     setLoading(true);
     const [{ data: profiles }, { data: quals }, { data: timesheets }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, role, dob').eq('status', 'active').order('full_name'),
+      supabase.from('profiles').select('id, full_name, role, dob, is_permanent').eq('status', 'active').order('full_name'),
       supabase.from('qualifications').select('*'),
       supabase.from('timesheets').select('staff_id, worked_minutes'),
     ]);
@@ -57,6 +58,7 @@ export function useStaffCompliance() {
         hoursWorked,
         holidayAllowed: round2(hoursWorked * IRREGULAR_ACCRUAL_RATE),
         dob: p.dob,
+        isPermanent: p.is_permanent,
       };
     });
     setStaff(rows);

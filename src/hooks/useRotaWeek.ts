@@ -13,12 +13,35 @@ export interface ShiftWithAssignments extends Tables<'shifts'> {
   assignments: ShiftAssignmentWithName[];
 }
 
+export interface RotaStaffRow {
+  id: string;
+  full_name: string;
+  is_permanent: boolean;
+}
+
 const PAST_WINDOW_DAYS = 14;
 const FUTURE_WINDOW_DAYS = 180;
+const REPEAT_WEEK_DAYS = 7;
+
+// Same-weekday dates, one week apart, that stay within the calendar month
+// of `startISO` — used to auto-repeat a permanent staff member's first
+// week of shifts across the rest of that month.
+function repeatDatesInSameMonth(startISO: string): string[] {
+  const start = parseISODate(startISO);
+  const month = start.getUTCMonth();
+  const year = start.getUTCFullYear();
+  const dates: string[] = [];
+  let next = addDays(start, REPEAT_WEEK_DAYS);
+  while (next.getUTCFullYear() === year && next.getUTCMonth() === month) {
+    dates.push(toISODate(next));
+    next = addDays(next, REPEAT_WEEK_DAYS);
+  }
+  return dates;
+}
 
 export function useRotaWeek() {
   const [shifts, setShifts] = useState<ShiftWithAssignments[]>([]);
-  const [staff, setStaff] = useState<{ id: string; full_name: string }[]>([]);
+  const [staff, setStaff] = useState<RotaStaffRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const rangeStart = toISODate(new Date());
@@ -45,34 +68,38 @@ export function useRotaWeek() {
     refresh();
   }, [refresh]);
 
+  async function findOrCreateShiftId(
+    shift_date: string,
+    template: ShiftTemplate
+  ): Promise<{ id?: string; error?: string }> {
+    const existing = shifts.find(
+      (s) => s.shift_date === shift_date && s.start_time === template.start_time && s.end_time === template.end_time
+    );
+    if (existing) return { id: existing.id };
+
+    const { data: shift, error } = await supabase
+      .from('shifts')
+      .insert({
+        shift_date,
+        start_time: template.start_time,
+        end_time: template.end_time,
+        role: template.club,
+        expected_children_under8: 0,
+        expected_children_8plus: 0,
+      })
+      .select()
+      .single();
+    if (error || !shift) return { error: error?.message ?? 'Could not create shift.' };
+    return { id: shift.id };
+  }
+
   async function assignShift(input: {
     shift_date: string;
     template: ShiftTemplate;
     staffId?: string;
   }): Promise<{ error?: string }> {
-    let shiftId = shifts.find(
-      (s) =>
-        s.shift_date === input.shift_date &&
-        s.start_time === input.template.start_time &&
-        s.end_time === input.template.end_time
-    )?.id;
-
-    if (!shiftId) {
-      const { data: shift, error } = await supabase
-        .from('shifts')
-        .insert({
-          shift_date: input.shift_date,
-          start_time: input.template.start_time,
-          end_time: input.template.end_time,
-          role: input.template.club,
-          expected_children_under8: 0,
-          expected_children_8plus: 0,
-        })
-        .select()
-        .single();
-      if (error || !shift) return { error: error?.message ?? 'Could not create shift.' };
-      shiftId = shift.id;
-    }
+    const { id: shiftId, error: shiftError } = await findOrCreateShiftId(input.shift_date, input.template);
+    if (!shiftId) return { error: shiftError };
 
     const { error: assignError } = await supabase.from('shift_assignments').insert({
       shift_id: shiftId,
@@ -80,6 +107,26 @@ export function useRotaWeek() {
       status: input.staffId ? 'assigned' : 'open',
     });
     if (assignError) return { error: assignError.message };
+
+    const isPermanent = input.staffId ? staff.find((s) => s.id === input.staffId)?.is_permanent : false;
+    if (input.staffId && isPermanent) {
+      for (const repeatDate of repeatDatesInSameMonth(input.shift_date)) {
+        const { id: repeatShiftId } = await findOrCreateShiftId(repeatDate, input.template);
+        if (!repeatShiftId) continue;
+        const { data: existingAssignment } = await supabase
+          .from('shift_assignments')
+          .select('id')
+          .eq('shift_id', repeatShiftId)
+          .eq('staff_id', input.staffId)
+          .maybeSingle();
+        if (existingAssignment) continue;
+        await supabase.from('shift_assignments').insert({
+          shift_id: repeatShiftId,
+          staff_id: input.staffId,
+          status: 'assigned',
+        });
+      }
+    }
 
     await refresh();
     return {};

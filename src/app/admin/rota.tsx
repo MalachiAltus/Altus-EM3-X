@@ -193,6 +193,9 @@ export default function RotaScreen() {
 
               <View style={styles.column}>
                 <Text style={styles.columnHeading}>Staff</Text>
+                {staff.some((s) => s.is_permanent) && (
+                  <Text style={styles.permanentHint}>🔁 = permanent, repeats weekly for the month</Text>
+                )}
                 <Pressable
                   onPress={() => handleAssign(undefined)}
                   disabled={!selectedTemplate || busy}
@@ -207,7 +210,10 @@ export default function RotaScreen() {
                     disabled={!selectedTemplate || busy}
                     style={[styles.staffRow, !selectedTemplate && styles.staffRowDisabled]}
                   >
-                    <Text style={styles.staffRowText}>{s.full_name}</Text>
+                    <Text style={styles.staffRowText}>
+                      {s.full_name}
+                      {s.is_permanent ? ' 🔁' : ''}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -299,6 +305,7 @@ const styles = StyleSheet.create({
   assignColumns: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
   column: { flex: 1, gap: spacing.xs },
   columnHeading: { ...type.label, color: colors.muted, marginBottom: spacing.xs },
+  permanentHint: { ...type.small, color: colors.muted, marginBottom: spacing.xs },
   templateRow: {
     minHeight: minTapTarget,
     justifyContent: 'center',
