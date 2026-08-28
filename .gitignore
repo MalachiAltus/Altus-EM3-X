@@ -37,3 +37,5 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+.vercel
+.env*
