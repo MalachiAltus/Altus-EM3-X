@@ -48,10 +48,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:web": "expo export -p web",
     "lint": "expo lint",
     "test": "jest"
   },
   "private": true,
+  "engines": {
+    "node": ">=20.19.4"
+  },
   "jest": {
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
