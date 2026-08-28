@@ -13,7 +13,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -510,6 +510,47 @@ export type Database = {
           },
         ]
       }
+      signup_requests: {
+        Row: {
+          assigned_role: Database["public"]["Enums"]["staff_role"] | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          email: string
+          full_name: string
+          id: string
+          status: Database["public"]["Enums"]["signup_request_status"]
+        }
+        Insert: {
+          assigned_role?: Database["public"]["Enums"]["staff_role"] | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          email: string
+          full_name: string
+          id?: string
+          status?: Database["public"]["Enums"]["signup_request_status"]
+        }
+        Update: {
+          assigned_role?: Database["public"]["Enums"]["staff_role"] | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          status?: Database["public"]["Enums"]["signup_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signup_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       swap_requests: {
         Row: {
           assignment_id: string
@@ -716,6 +757,7 @@ export type Database = {
         | "safeguarding"
         | "other"
       request_status: "pending" | "approved" | "declined" | "cancelled"
+      signup_request_status: "pending" | "approved" | "declined"
       staff_role: "staff" | "manager" | "admin"
       staff_status: "active" | "leaver"
       swap_status:
@@ -866,6 +908,7 @@ export const Constants = {
         "other",
       ],
       request_status: ["pending", "approved", "declined", "cancelled"],
+      signup_request_status: ["pending", "approved", "declined"],
       staff_role: ["staff", "manager", "admin"],
       staff_status: ["active", "leaver"],
       swap_status: [

@@ -1,4 +1,5 @@
-import { Redirect } from 'expo-router';
+import { Image } from 'expo-image';
+import { Link, Redirect } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -47,9 +48,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>EM3</Text>
-        </View>
+        <Image source={require('../../assets/images/em3-logo.png')} style={styles.logo} contentFit="contain" />
 
         <Text style={styles.title}>Your shifts, records, and time off — all in one place</Text>
         <Text style={styles.subtitle}>
@@ -98,7 +97,13 @@ export default function LoginScreen() {
             )}
           </Pressable>
 
-          <Text style={styles.hint}>New here? Your manager will send you an invite.</Text>
+          <Link href="/signup" asChild>
+            <Pressable style={({ pressed }) => [styles.signupButton, pressed && styles.buttonPressed]}>
+              <Text style={styles.signupButtonText}>Sign Up</Text>
+            </Pressable>
+          </Link>
+
+          <Text style={styles.hint}>New here? Request access — your admin will approve it.</Text>
         </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -115,16 +120,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
-  logo: {
-    width: 64,
-    height: 64,
-    borderRadius: radii.lg,
-    backgroundColor: colors.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  logoText: { color: colors.white, fontWeight: '700', fontSize: 18 },
+  logo: { width: 96, height: 82, marginBottom: spacing.md },
   title: { ...type.h2, color: colors.ink, textAlign: 'center' },
   subtitle: { ...type.body, color: colors.muted, textAlign: 'center', marginBottom: spacing.md },
   form: { width: '100%', maxWidth: 360, gap: spacing.xs },
@@ -150,6 +146,16 @@ const styles = StyleSheet.create({
   },
   buttonPressed: { backgroundColor: colors.blueDark },
   buttonDisabled: { opacity: 0.7 },
+  signupButton: {
+    minHeight: minTapTarget,
+    borderWidth: 1,
+    borderColor: colors.blue,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+  },
+  signupButtonText: { color: colors.blue, ...type.bodyBold },
   buttonText: { color: colors.white, ...type.bodyBold },
   hint: { ...type.small, color: colors.muted, textAlign: 'center', marginTop: spacing.md },
 });

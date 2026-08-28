@@ -22,7 +22,7 @@ Your rights: you can review your own record at any time from My Record, correct 
 
 Questions or requests about your data should be directed to your EM3 manager.`;
 
-const TERMS = `EM3 X is provided for use by EM3 staff for work-related scheduling, attendance, and leave management. Accounts are provisioned by an EM3 manager; you are responsible for keeping your login credentials and club clock-in PIN confidential and for the accuracy of the hours, shifts, and leave requests you submit through the app.
+const TERMS = `EM3 X is provided for use by EM3 staff for work-related scheduling, attendance, and leave management. Accounts are provisioned by an EM3 manager or created via a sign-up request approved by an admin; you are responsible for keeping your login credentials and club clock-in PIN confidential and for the accuracy of the hours, shifts, and leave requests you submit through the app.
 
 Clocking in or out on behalf of another staff member, or submitting false attendance or leave information, is a disciplinary matter handled under EM3's normal staff policies, not just an app rule.
 

@@ -1,15 +1,24 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useApprovals, type AbsenceApprovalItem, type SwapApprovalItem } from '@/hooks/useApprovals';
+import { useApprovals, type AbsenceApprovalItem, type SignupApprovalItem, type SwapApprovalItem } from '@/hooks/useApprovals';
+import type { Tables } from '@/lib/supabase/types';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
+
+const ROLE_OPTIONS: { value: Tables<'profiles'>['role']; label: string }[] = [
+  { value: 'staff', label: 'Playworker' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'admin', label: 'Admin' },
+];
 
 function formatDate(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 export default function ApprovalsScreen() {
-  const { absences, swaps, loading, approveAbsence, declineAbsence, approveSwap, declineSwap } = useApprovals();
+  const { absences, swaps, signups, loading, approveAbsence, declineAbsence, approveSwap, declineSwap, approveSignup, declineSignup } =
+    useApprovals();
 
   if (loading) {
     return (
@@ -19,7 +28,7 @@ export default function ApprovalsScreen() {
     );
   }
 
-  const isEmpty = absences.length === 0 && swaps.length === 0;
+  const isEmpty = absences.length === 0 && swaps.length === 0 && signups.length === 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -28,6 +37,15 @@ export default function ApprovalsScreen() {
         <Text style={styles.subtitle}>Staff with an expired DBS aren&apos;t counted toward ratio.</Text>
 
         {isEmpty && <Text style={styles.emptyText}>Nothing waiting for a decision.</Text>}
+
+        {signups.map((req) => (
+          <SignupCard
+            key={req.id}
+            req={req}
+            onApprove={(role) => approveSignup(req.id, role)}
+            onDecline={() => declineSignup(req.id)}
+          />
+        ))}
 
         {absences.map((req) => (
           <AbsenceCard key={req.id} req={req} onApprove={() => approveAbsence(req)} onDecline={() => declineAbsence(req.id)} />
@@ -43,6 +61,62 @@ export default function ApprovalsScreen() {
         ))}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SignupCard({
+  req,
+  onApprove,
+  onDecline,
+}: {
+  req: SignupApprovalItem;
+  onApprove: (role: Tables<'profiles'>['role']) => Promise<{ error?: string }>;
+  onDecline: () => void;
+}) {
+  const [role, setRole] = useState<Tables<'profiles'>['role']>('staff');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleApprove() {
+    setError(null);
+    setSubmitting(true);
+    const { error: approveError } = await onApprove(role);
+    setSubmitting(false);
+    if (approveError) setError(approveError);
+  }
+
+  return (
+    <View style={[styles.card, { borderColor: colors.border }]}>
+      <Text style={styles.cardHeader}>New sign-up · {req.full_name}</Text>
+      <Text style={styles.swapNote}>{req.email}</Text>
+
+      <View style={styles.roleRow}>
+        {ROLE_OPTIONS.map((opt) => (
+          <Pressable
+            key={opt.value}
+            onPress={() => setRole(opt.value)}
+            style={[styles.roleOption, role === opt.value && styles.roleOptionActive]}
+          >
+            <Text style={[styles.roleOptionText, role === opt.value && styles.roleOptionTextActive]}>{opt.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
+      <View style={styles.actions}>
+        <Pressable
+          onPress={handleApprove}
+          disabled={submitting}
+          style={({ pressed }) => [styles.approveButton, pressed && styles.buttonPressed]}
+        >
+          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.approveText}>Approve as {ROLE_OPTIONS.find((o) => o.value === role)?.label}</Text>}
+        </Pressable>
+        <Pressable onPress={onDecline} disabled={submitting} style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}>
+          <Text style={styles.declineText}>Decline</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -157,4 +231,19 @@ const styles = StyleSheet.create({
   },
   declineText: { color: colors.ink, ...type.bodyBold },
   buttonPressed: { opacity: 0.85 },
+  roleRow: { flexDirection: 'row', gap: spacing.xs },
+  roleOption: {
+    flex: 1,
+    minHeight: minTapTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  roleOptionActive: { backgroundColor: colors.navy, borderColor: colors.navy },
+  roleOptionText: { ...type.small, color: colors.ink, fontWeight: '700' },
+  roleOptionTextActive: { color: colors.white },
+  errorText: { ...type.small, color: colors.danger },
 });

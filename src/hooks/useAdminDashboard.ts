@@ -29,13 +29,14 @@ export function useAdminDashboard() {
     setLoading(true);
     const today = toISODate(new Date());
 
-    const [{ data: events }, { data: profiles }, { data: absenceReqs }, { data: swapReqs }, { data: quals }] =
+    const [{ data: events }, { data: profiles }, { data: absenceReqs }, { data: swapReqs }, { data: quals }, { data: signupReqs }] =
       await Promise.all([
         supabase.from('clock_events').select('staff_id, event_type, occurred_at').order('occurred_at', { ascending: false }),
         supabase.from('profiles').select('id, full_name'),
         supabase.from('absence_requests').select('id').eq('status', 'pending'),
         supabase.from('swap_requests').select('id').eq('status', 'colleague_accepted'),
         supabase.from('qualifications').select('staff_id, type, expires_on'),
+        supabase.from('signup_requests').select('id').eq('status', 'pending'),
       ]);
 
     const nameById = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]));
@@ -67,7 +68,7 @@ export function useAdminDashboard() {
     }
 
     setOnSiteNow(onSite);
-    setPendingApprovalsCount((absenceReqs?.length ?? 0) + (swapReqs?.length ?? 0));
+    setPendingApprovalsCount((absenceReqs?.length ?? 0) + (swapReqs?.length ?? 0) + (signupReqs?.length ?? 0));
     setComplianceIssues(issues);
     setLoading(false);
   }, []);

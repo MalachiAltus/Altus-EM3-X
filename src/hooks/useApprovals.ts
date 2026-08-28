@@ -16,6 +16,8 @@ export interface SwapApprovalItem extends Tables<'swap_requests'> {
   shift: Tables<'shifts'> | null;
 }
 
+export type SignupApprovalItem = Tables<'signup_requests'>;
+
 async function computeVerdictForAbsence(
   req: Tables<'absence_requests'>,
   rules: Tables<'ratio_rules'>[]
@@ -82,11 +84,12 @@ export function useApprovals() {
   const decidedBy = session?.user?.id ?? null;
   const [absences, setAbsences] = useState<AbsenceApprovalItem[]>([]);
   const [swaps, setSwaps] = useState<SwapApprovalItem[]>([]);
+  const [signups, setSignups] = useState<SignupApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [{ data: pendingAbsences }, { data: pendingSwaps }, { data: rules }, { data: profiles }] =
+    const [{ data: pendingAbsences }, { data: pendingSwaps }, { data: rules }, { data: profiles }, { data: pendingSignups }] =
       await Promise.all([
         supabase.from('absence_requests').select('*').eq('status', 'pending').order('created_at'),
         supabase
@@ -96,7 +99,9 @@ export function useApprovals() {
           .order('created_at'),
         supabase.from('ratio_rules').select('*'),
         supabase.from('profiles').select('id, full_name'),
+        supabase.from('signup_requests').select('*').eq('status', 'pending').order('created_at'),
       ]);
+    setSignups(pendingSignups ?? []);
 
     const nameById = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]));
 
@@ -170,5 +175,42 @@ export function useApprovals() {
     return { error: error?.message };
   }
 
-  return { absences, swaps, loading, approveAbsence, declineAbsence, approveSwap, declineSwap, refresh };
+  async function approveSignup(id: string, role: Tables<'profiles'>['role']): Promise<{ error?: string }> {
+    const { data, error } = await supabase.functions.invoke('approve-signup', {
+      body: { signup_request_id: id, role },
+    });
+    if (error) {
+      // supabase-js only puts a generic "non-2xx status code" message on
+      // FunctionsHttpError — the actual reason is in the response body.
+      const context = (error as { context?: Response }).context;
+      const body = await context?.json?.().catch(() => null);
+      return { error: body?.error ?? error.message };
+    }
+    if (data?.error) return { error: data.error as string };
+    await refresh();
+    return {};
+  }
+
+  async function declineSignup(id: string): Promise<{ error?: string }> {
+    const { error } = await supabase
+      .from('signup_requests')
+      .update({ status: 'declined', decided_by: decidedBy, decided_at: new Date().toISOString() })
+      .eq('id', id);
+    if (!error) await refresh();
+    return { error: error?.message };
+  }
+
+  return {
+    absences,
+    swaps,
+    signups,
+    loading,
+    approveAbsence,
+    declineAbsence,
+    approveSwap,
+    declineSwap,
+    approveSignup,
+    declineSignup,
+    refresh,
+  };
 }
