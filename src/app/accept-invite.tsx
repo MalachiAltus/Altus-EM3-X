@@ -22,7 +22,12 @@ export default function AcceptInviteScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  const [step, setStep] = useState<'password' | 'name' | 'done'>('password');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     async function establishSession() {
@@ -40,7 +45,7 @@ export default function AcceptInviteScreen() {
         setStatus('error');
         return;
       }
-      const { error: sessionError } = await supabase.auth.setSession({
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
@@ -48,6 +53,24 @@ export default function AcceptInviteScreen() {
         setError(sessionError.message);
         setStatus('error');
         return;
+      }
+      setUserId(sessionData.user?.id ?? null);
+
+      // Pre-fill from the signup request's name as a convenience — the
+      // person still has to confirm/edit it in the next step, since that's
+      // the whole point (nobody's typed their own name into this account
+      // until now).
+      if (sessionData.user?.id) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', sessionData.user.id)
+          .maybeSingle();
+        if (existingProfile?.full_name) {
+          const [first, ...rest] = existingProfile.full_name.trim().split(/\s+/);
+          setFirstName(first ?? '');
+          setSurname(rest.join(' '));
+        }
       }
       setStatus('ready');
     }
@@ -71,7 +94,30 @@ export default function AcceptInviteScreen() {
       setError(updateError.message);
       return;
     }
-    setDone(true);
+    setStep('name');
+  }
+
+  async function handleSaveName() {
+    setNameError(null);
+    if (!firstName.trim() || !surname.trim()) {
+      setNameError('Enter your first name and surname.');
+      return;
+    }
+    if (!userId) {
+      setNameError('Your session expired — reopen the invite link and try again.');
+      return;
+    }
+    setSavingName(true);
+    const { error: nameUpdateError } = await supabase
+      .from('profiles')
+      .update({ full_name: `${firstName.trim()} ${surname.trim()}`, name_confirmed: true })
+      .eq('id', userId);
+    setSavingName(false);
+    if (nameUpdateError) {
+      setNameError(nameUpdateError.message);
+      return;
+    }
+    setStep('done');
   }
 
   if (status === 'checking') {
@@ -82,7 +128,7 @@ export default function AcceptInviteScreen() {
     );
   }
 
-  if (done) {
+  if (step === 'done') {
     return (
       <SafeAreaView style={styles.centered}>
         <Image source={require('../../assets/images/em3-logo.png')} style={styles.logo} contentFit="contain" />
@@ -94,6 +140,50 @@ export default function AcceptInviteScreen() {
           <Text style={styles.buttonText}>Continue</Text>
         </Pressable>
       </SafeAreaView>
+    );
+  }
+
+  if (step === 'name' && status === 'ready') {
+    return (
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <SafeAreaView style={styles.safeArea}>
+          <Image source={require('../../assets/images/em3-logo.png')} style={styles.logo} contentFit="contain" />
+          <Text style={styles.title}>What&apos;s your name?</Text>
+          <Text style={styles.subtitle}>This is the name your admin and colleagues will see.</Text>
+
+          <View style={styles.form}>
+            <Text style={styles.label}>First name</Text>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              autoComplete="given-name"
+              placeholder="First name"
+              placeholderTextColor={colors.subtle}
+            />
+
+            <Text style={styles.label}>Surname</Text>
+            <TextInput
+              style={styles.input}
+              value={surname}
+              onChangeText={setSurname}
+              autoComplete="family-name"
+              placeholder="Surname"
+              placeholderTextColor={colors.subtle}
+            />
+
+            {nameError && <Text style={styles.error}>{nameError}</Text>}
+
+            <Pressable
+              onPress={handleSaveName}
+              disabled={savingName}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, savingName && styles.buttonDisabled]}
+            >
+              {savingName ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Continue</Text>}
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     );
   }
 

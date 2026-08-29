@@ -51,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3cb74f56-0bd2-4a00-97dd-c1054d97add5"
+      }
+    },
+    "owner": "altus_x"
   }
 }
