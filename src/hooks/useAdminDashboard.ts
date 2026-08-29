@@ -24,20 +24,35 @@ export function useAdminDashboard() {
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [complianceIssues, setComplianceIssues] = useState<ComplianceIssue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const today = toISODate(new Date());
 
-    const [{ data: events }, { data: profiles }, { data: absenceReqs }, { data: swapReqs }, { data: quals }, { data: signupReqs }] =
-      await Promise.all([
-        supabase.from('clock_events').select('staff_id, event_type, occurred_at').order('occurred_at', { ascending: false }),
-        supabase.from('profiles').select('id, full_name'),
-        supabase.from('absence_requests').select('id').eq('status', 'pending'),
-        supabase.from('swap_requests').select('id').eq('status', 'colleague_accepted'),
-        supabase.from('qualifications').select('staff_id, type, expires_on'),
-        supabase.from('signup_requests').select('id').eq('status', 'pending'),
-      ]);
+    const [
+      { data: events, error: eventsError },
+      { data: profiles, error: profilesError },
+      { data: absenceReqs, error: absenceError },
+      { data: swapReqs, error: swapError },
+      { data: quals, error: qualsError },
+      { data: signupReqs, error: signupError },
+    ] = await Promise.all([
+      supabase.from('clock_events').select('staff_id, event_type, occurred_at').order('occurred_at', { ascending: false }),
+      supabase.from('profiles').select('id, full_name'),
+      supabase.from('absence_requests').select('id').eq('status', 'pending'),
+      supabase.from('swap_requests').select('id').eq('status', 'colleague_accepted'),
+      supabase.from('qualifications').select('staff_id, type, expires_on'),
+      supabase.from('signup_requests').select('id').eq('status', 'pending'),
+    ]);
+
+    const firstError = eventsError ?? profilesError ?? absenceError ?? swapError ?? qualsError ?? signupError;
+    if (firstError) {
+      setError(firstError.message);
+      setLoading(false);
+      return;
+    }
 
     const nameById = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]));
 
@@ -77,5 +92,5 @@ export function useAdminDashboard() {
     refresh();
   }, [refresh]);
 
-  return { onSiteNow, pendingApprovalsCount, complianceIssues, loading, refresh };
+  return { onSiteNow, pendingApprovalsCount, complianceIssues, loading, error, refresh };
 }

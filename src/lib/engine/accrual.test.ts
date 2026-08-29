@@ -1,4 +1,4 @@
-import { computeAccrual, computeBalance } from './accrual';
+import { computeAccrual, computeBalance, formatHoursAsDaysHours } from './accrual';
 
 describe('irregular-hours accrual (12.07%)', () => {
   test('mid-year starter accrues from their first period, no broken average', () => {
@@ -145,6 +145,33 @@ describe('fixed part-time accrual (contracted hours × 5.6 weeks)', () => {
     });
     expect(combined).toBeLessThan(fullMonthAtNewRate.accruedHours);
   });
+
+  test('a leaver who starts and leaves within their first leave year is pro-rated to their actual employed days, not to the year end', () => {
+    // Leave year 2026-04-01 -> 2027-04-01 (365 days). 20h/week contract
+    // (full annual = 112h). Starts 2026-10-01, leaves 2027-01-01 — employed
+    // 92 of the leave year's 365 days. Without accounting for the leave
+    // date, the entitlement pool would be sized off (start -> year end)
+    // instead of (start -> leave date), understating this leaver's payout
+    // by roughly half.
+    const result = computeAccrual({
+      contractType: 'fixed_part_time',
+      contractedWeeklyHours: 20,
+      periodStart: '2026-10-01',
+      periodEnd: '2026-11-01',
+      employmentStartDate: '2026-10-01',
+      employmentEndDate: '2027-01-01',
+    });
+    const fullAnnual = 20 * 5.6;
+    const entitlementForYear = fullAnnual * (92 / 365);
+    const fullMonthly = entitlementForYear / 12;
+    expect(result.accruedHours).toBeCloseTo(Math.round(fullMonthly * 100) / 100, 2);
+    // Sanity check against the pre-fix (wrong) formula, which prorated to
+    // the leave-year end instead of the leave date and would have returned
+    // roughly double this figure.
+    const wrongEntitlementForYear = fullAnnual * (182 / 365);
+    const wrongFullMonthly = wrongEntitlementForYear / 12;
+    expect(result.accruedHours).toBeLessThan(wrongFullMonthly);
+  });
 });
 
 describe('holiday balance', () => {
@@ -152,5 +179,21 @@ describe('holiday balance', () => {
     expect(computeBalance(100.456, 20, 5)).toBe(75.46);
     expect(computeBalance(10, 10, 0)).toBe(0);
     expect(computeBalance(0, 0, 0)).toBe(0);
+  });
+});
+
+describe('formatHoursAsDaysHours', () => {
+  test('formats a positive total normally', () => {
+    expect(formatHoursAsDaysHours(9.5)).toBe('1d 1h 30m');
+    expect(formatHoursAsDaysHours(2)).toBe('2h 0m');
+  });
+
+  test('a negative balance keeps its sign instead of displaying as a plausible positive number', () => {
+    // Someone who has taken more holiday than they've accrued (a real,
+    // reachable state via computeBalance) must not have their debt shown
+    // as if it were hours banked.
+    expect(formatHoursAsDaysHours(-5)).toBe('-5h 0m');
+    expect(formatHoursAsDaysHours(-9)).toBe('-1d 1h 0m');
+    expect(formatHoursAsDaysHours(-0.5)).toBe('-0h 30m');
   });
 });

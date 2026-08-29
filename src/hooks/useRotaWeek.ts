@@ -44,24 +44,28 @@ export function useRotaWeek() {
   const [staff, setStaff] = useState<RotaStaffRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Recomputed on every render (and again inside `refresh` itself) rather
+  // than memoized once, so a screen left mounted across a day boundary
+  // doesn't keep querying/publishing/copying against a stale "today".
   const rangeStart = toISODate(new Date());
   const rangeEnd = toISODate(addDays(new Date(), FUTURE_WINDOW_DAYS));
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    const start = toISODate(new Date());
+    const end = toISODate(addDays(new Date(), FUTURE_WINDOW_DAYS));
     const [{ data: shiftRows }, { data: staffRows }] = await Promise.all([
       supabase
         .from('shifts')
         .select('*, assignments:shift_assignments(*, profile:profiles(full_name))')
-        .gte('shift_date', rangeStart)
-        .lt('shift_date', rangeEnd)
+        .gte('shift_date', start)
+        .lt('shift_date', end)
         .order('shift_date'),
       supabase.rpc('list_active_staff'),
     ]);
     setShifts((shiftRows as unknown as ShiftWithAssignments[]) ?? []);
     setStaff(staffRows ?? []);
     setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -160,22 +164,41 @@ export function useRotaWeek() {
 
     for (const s of (prevShifts as unknown as ShiftWithAssignments[]) ?? []) {
       const newDate = toISODate(addDays(parseISODate(s.shift_date), PAST_WINDOW_DAYS));
-      const { data: newShift, error: insertError } = await supabase
+
+      const { data: existingShift } = await supabase
         .from('shifts')
-        .insert({
-          shift_date: newDate,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          role: s.role,
-          expected_children_under8: s.expected_children_under8,
-          expected_children_8plus: s.expected_children_8plus,
-        })
-        .select()
-        .single();
-      if (insertError || !newShift) continue;
+        .select('id')
+        .eq('shift_date', newDate)
+        .eq('start_time', s.start_time)
+        .eq('end_time', s.end_time)
+        .maybeSingle();
+
+      let targetShiftId = existingShift?.id;
+      if (!targetShiftId) {
+        const { data: newShift, error: insertError } = await supabase
+          .from('shifts')
+          .insert({
+            shift_date: newDate,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            role: s.role,
+            expected_children_under8: s.expected_children_under8,
+            expected_children_8plus: s.expected_children_8plus,
+          })
+          .select()
+          .single();
+        if (insertError || !newShift) continue;
+        targetShiftId = newShift.id;
+      }
+
       for (const a of s.assignments) {
+        let existingQuery = supabase.from('shift_assignments').select('id').eq('shift_id', targetShiftId);
+        existingQuery = a.staff_id ? existingQuery.eq('staff_id', a.staff_id) : existingQuery.is('staff_id', null);
+        const { data: existingAssignment } = await existingQuery.maybeSingle();
+        if (existingAssignment) continue;
+
         await supabase.from('shift_assignments').insert({
-          shift_id: newShift.id,
+          shift_id: targetShiftId,
           staff_id: a.staff_id,
           status: a.staff_id ? 'assigned' : 'open',
         });

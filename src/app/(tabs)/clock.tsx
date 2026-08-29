@@ -35,6 +35,7 @@ export default function ClockScreen() {
     shift: todayShift,
     hasTimesheet: todayShiftLogged,
     loading: todayShiftLoading,
+    error: todayShiftError,
     logMissedShift,
   } = useTodayShift();
   const [submitting, setSubmitting] = useState(false);
@@ -69,9 +70,14 @@ export default function ClockScreen() {
   }
 
   async function handleClockOut() {
+    setError(null);
     setSubmitting(true);
-    await supabase.rpc('clock_out', { p_device_info: Platform.OS });
+    const { error: rpcError } = await supabase.rpc('clock_out', { p_device_info: Platform.OS });
     setSubmitting(false);
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
     refresh();
   }
 
@@ -89,6 +95,8 @@ export default function ClockScreen() {
         <Text style={styles.shiftLabel}>Today&apos;s shift</Text>
         {todayShiftLoading ? (
           <ActivityIndicator color={colors.navy} />
+        ) : todayShiftError ? (
+          <Text style={styles.error}>Couldn&apos;t check — try reopening this screen.</Text>
         ) : (
           <Text style={styles.shiftValue}>
             {todayShift
@@ -110,6 +118,7 @@ export default function ClockScreen() {
             <Text style={styles.elapsedLabel}>On shift</Text>
             <Text style={styles.elapsedValue}>{elapsed}</Text>
           </View>
+          {error && <Text style={styles.error}>{error}</Text>}
           <Pressable
             onPress={handleClockOut}
             disabled={submitting}

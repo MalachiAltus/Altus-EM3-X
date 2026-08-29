@@ -17,7 +17,7 @@ function formatTime(iso: string): string {
 }
 
 export default function AdminDashboardScreen() {
-  const { onSiteNow, pendingApprovalsCount, complianceIssues, loading } = useAdminDashboard();
+  const { onSiteNow, pendingApprovalsCount, complianceIssues, loading, error } = useAdminDashboard();
 
   if (loading) {
     return (
@@ -31,6 +31,12 @@ export default function AdminDashboardScreen() {
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Today at EM3</Text>
+
+        {error && (
+          <Text style={styles.errorBanner}>
+            Some data couldn&apos;t be loaded ({error}) — figures below may be incomplete or stale.
+          </Text>
+        )}
 
         <View style={styles.grid}>
           <View style={styles.tile}>
@@ -83,6 +89,13 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md },
   title: { ...type.h2, color: colors.ink },
+  errorBanner: {
+    ...type.small,
+    color: colors.danger,
+    backgroundColor: colors.dangerBg,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+  },
   grid: { gap: spacing.md },
   tile: {
     backgroundColor: colors.card,

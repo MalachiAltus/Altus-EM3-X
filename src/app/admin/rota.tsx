@@ -25,6 +25,7 @@ export default function RotaScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publishMsg, setPublishMsg] = useState<string | null>(null);
+  const [copying, setCopying] = useState(false);
 
   const shiftsByDate = useMemo(() => {
     const map: Record<string, ShiftWithAssignments[]> = {};
@@ -67,6 +68,13 @@ export default function RotaScreen() {
     setPublishMsg(publishError ?? 'Assigned.');
   }
 
+  async function handleCopyPreviousPeriod() {
+    if (copying) return;
+    setCopying(true);
+    await copyPreviousPeriod();
+    setCopying(false);
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -84,10 +92,11 @@ export default function RotaScreen() {
 
         <View style={styles.actionsRow}>
           <Pressable
-            onPress={copyPreviousPeriod}
+            onPress={handleCopyPreviousPeriod}
+            disabled={copying}
             style={({ pressed }) => [styles.smallButton, pressed && styles.buttonPressed]}
           >
-            <Text style={styles.smallButtonText}>Copy Previous Period</Text>
+            {copying ? <ActivityIndicator color={colors.ink} /> : <Text style={styles.smallButtonText}>Copy Previous Period</Text>}
           </Pressable>
           <Pressable
             onPress={handlePublish}
@@ -161,7 +170,15 @@ export default function RotaScreen() {
                       s.assignments.map((a) => (
                         <View key={a.id} style={styles.assignmentRow}>
                           <Text style={styles.existingStaff}>{a.profile?.full_name ?? 'Open shift'}</Text>
-                          <Pressable onPress={() => removeAssignment(a.id)} hitSlop={8} style={styles.removeTouch}>
+                          <Pressable
+                            onPress={async () => {
+                              setError(null);
+                              const { error: removeError } = await removeAssignment(a.id);
+                              if (removeError) setError(removeError);
+                            }}
+                            hitSlop={8}
+                            style={styles.removeTouch}
+                          >
                             <Text style={styles.removeText}>Remove</Text>
                           </Pressable>
                         </View>

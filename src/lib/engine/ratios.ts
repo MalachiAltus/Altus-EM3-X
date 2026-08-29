@@ -97,12 +97,24 @@ export function checkRatio(input: ShiftRatioInput): RatioCheckResult {
   const eligibleStaffCount = eligibleStaff.length;
   const violations: RatioViolation[] = [];
 
-  for (const rule of input.rules) {
-    const children = childrenForRule(rule, input);
-    if (children <= 0) continue;
+  const activeRules = input.rules
+    .map((rule) => ({ rule, children: childrenForRule(rule, input) }))
+    .filter(({ children }) => children > 0);
 
-    const required = Math.ceil(children / rule.childrenPerStaff);
-    if (eligibleStaffCount < required) {
+  // Age bands need their own dedicated staff, not a shared headcount — a
+  // shift covering both under-8s and over-8s needs the SUM of each band's
+  // requirement, not just enough bodies to individually satisfy whichever
+  // band asks for the most (which would let e.g. 4 staff "pass" both a
+  // 4-required under-8 check and a 3-required over-8 check at once, when 7
+  // are actually needed).
+  const totalRequired = activeRules.reduce(
+    (sum, { rule, children }) => sum + Math.ceil(children / rule.childrenPerStaff),
+    0
+  );
+
+  if (eligibleStaffCount < totalRequired) {
+    for (const { rule, children } of activeRules) {
+      const required = Math.ceil(children / rule.childrenPerStaff);
       violations.push({
         ageMin: rule.ageMin,
         ageMax: rule.ageMax,
@@ -110,8 +122,11 @@ export function checkRatio(input: ShiftRatioInput): RatioCheckResult {
         eligible: eligibleStaffCount,
         enforcement: rule.enforcement,
         message:
-          `${children} children aged ${rule.ageMin}-${rule.ageMax} need ${required} staff ` +
-          `(1:${rule.childrenPerStaff}) — only ${eligibleStaffCount} eligible.`,
+          activeRules.length > 1
+            ? `${children} children aged ${rule.ageMin}-${rule.ageMax} need ${required} staff (1:${rule.childrenPerStaff}) ` +
+              `— ${totalRequired} staff needed in total across all age groups, only ${eligibleStaffCount} eligible.`
+            : `${children} children aged ${rule.ageMin}-${rule.ageMax} need ${required} staff ` +
+              `(1:${rule.childrenPerStaff}) — only ${eligibleStaffCount} eligible.`,
       });
     }
   }

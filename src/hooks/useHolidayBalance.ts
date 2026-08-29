@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useSession } from '@/lib/auth/SessionProvider';
-import { computeAccrual, IRREGULAR_ACCRUAL_RATE } from '@/lib/engine/accrual';
+import { computeAccrual, DEFAULT_STANDARD_DAY_HOURS, STATUTORY_CAP_DAYS, STATUTORY_WEEKS } from '@/lib/engine/accrual';
 import { leaveYearBounds, round2, toISODate } from '@/lib/engine/dates';
 import { supabase } from '@/lib/supabase/client';
 
@@ -14,8 +14,10 @@ import { supabase } from '@/lib/supabase/client';
 export function useHolidayBalance() {
   const { session } = useSession();
   const [balance, setBalance] = useState(0);
-  // "Holiday hours allowed" — hours banked × 12.07%, shown alongside the
-  // balance as a quick-reference figure.
+  // "Holiday hours allowed" — the statutory ceiling this leave year: the
+  // 224h/year cap for irregular contracts, or contractedWeeklyHours × 5.6
+  // for fixed part-time. Not derived from `balance` — it's a separate,
+  // fixed entitlement figure to compare the balance against.
   const [allowed, setAllowed] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +33,7 @@ export function useHolidayBalance() {
 
     const { data: contract } = await supabase
       .from('contracts')
-      .select('type')
+      .select('type, weekly_hours')
       .eq('staff_id', userId)
       .order('effective_from', { ascending: false })
       .limit(1)
@@ -66,7 +68,7 @@ export function useHolidayBalance() {
 
       const irregularBalance = round2(accruedHours - takenHours);
       setBalance(irregularBalance);
-      setAllowed(round2(irregularBalance * IRREGULAR_ACCRUAL_RATE));
+      setAllowed(STATUTORY_CAP_DAYS * DEFAULT_STANDARD_DAY_HOURS);
       setLoading(false);
       return;
     }
@@ -80,7 +82,7 @@ export function useHolidayBalance() {
       .maybeSingle();
     const ledgerBalance = data?.running_balance ?? 0;
     setBalance(ledgerBalance);
-    setAllowed(round2(ledgerBalance * IRREGULAR_ACCRUAL_RATE));
+    setAllowed(round2(Number(contract?.weekly_hours ?? 0) * STATUTORY_WEEKS));
     setLoading(false);
   }, [session?.user?.id]);
 

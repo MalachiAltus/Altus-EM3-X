@@ -52,7 +52,7 @@ export default function SignupScreen() {
               they do.
             </Text>
             <Link href="/login" asChild>
-              <Pressable style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+              <Pressable style={styles.button}>
                 <Text style={styles.buttonText}>Back to Log In</Text>
               </Pressable>
             </Link>

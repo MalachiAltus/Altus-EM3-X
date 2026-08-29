@@ -23,6 +23,7 @@ export function useTodayShift() {
   const [shift, setShift] = useState<TodayShift | null>(null);
   const [hasTimesheet, setHasTimesheet] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const userId = session?.user?.id;
@@ -33,15 +34,22 @@ export function useTodayShift() {
       return;
     }
     setLoading(true);
+    setError(null);
     const today = toISODate(new Date());
 
-    const { data: assignments } = await supabase
+    const { data: assignments, error: assignmentsError } = await supabase
       .from('shift_assignments')
       .select('id, shift:shifts!inner(id, start_time, end_time, role, shift_date, published_at)')
       .eq('staff_id', userId)
       .eq('shift.shift_date', today)
       .not('shift.published_at', 'is', null)
       .returns<{ id: string; shift: Tables<'shifts'> }[]>();
+
+    if (assignmentsError) {
+      setError(assignmentsError.message);
+      setLoading(false);
+      return;
+    }
 
     const first = (assignments ?? [])[0]?.shift ?? null;
     setShift(first ? { id: first.id, start_time: first.start_time, end_time: first.end_time, role: first.role } : null);
@@ -83,5 +91,5 @@ export function useTodayShift() {
     return { error: null };
   }, [session?.user?.id, shift, refresh]);
 
-  return { shift, hasTimesheet, loading, refresh, logMissedShift };
+  return { shift, hasTimesheet, loading, error, refresh, logMissedShift };
 }

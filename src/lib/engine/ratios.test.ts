@@ -128,4 +128,31 @@ describe('ratio checking', () => {
     expect(result.ok).toBe(true);
     expect(result.violations).toHaveLength(0);
   });
+
+  test('two simultaneous age bands need the SUM of their requirements, not a shared headcount', () => {
+    // 26 under-8s need ceil(26/8)=4 staff; 24 over-8s need ceil(24/10)=3
+    // staff. Both bands are active at once, so 7 staff total are actually
+    // needed — 4 must not be treated as enough just because it happens to
+    // individually clear both bands' requirements on its own.
+    const understaffed = checkRatio({
+      shiftDate: '2026-08-23',
+      expectedChildrenUnder8: 26,
+      expectedChildren8Plus: 24,
+      assignedStaff: [staff('a'), staff('b'), staff('c'), staff('d')], // 4 staff
+      rules: RULES,
+    });
+    expect(understaffed.ok).toBe(false); // the 1:8 band is 'block' enforcement
+    expect(understaffed.violations).toHaveLength(2);
+    expect(understaffed.violations.every((v) => v.required === (v.ageMax <= 7 ? 4 : 3))).toBe(true);
+
+    const fullyStaffed = checkRatio({
+      shiftDate: '2026-08-23',
+      expectedChildrenUnder8: 26,
+      expectedChildren8Plus: 24,
+      assignedStaff: [staff('a'), staff('b'), staff('c'), staff('d'), staff('e'), staff('f'), staff('g')], // 7 staff
+      rules: RULES,
+    });
+    expect(fullyStaffed.ok).toBe(true);
+    expect(fullyStaffed.violations).toHaveLength(0);
+  });
 });

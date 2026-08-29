@@ -32,15 +32,18 @@ export const DEFAULT_STANDARD_DAY_HOURS = 8;
  * above. Display only — has no bearing on pay or accrual calculations.
  */
 export function formatHoursAsDaysHours(totalHours: number, dayHours: number = DEFAULT_STANDARD_DAY_HOURS): string {
-  const days = Math.floor(totalHours / dayHours);
-  const remainderHours = totalHours - days * dayHours;
+  const negative = totalHours < 0;
+  const abs = Math.abs(totalHours);
+  const days = Math.floor(abs / dayHours);
+  const remainderHours = abs - days * dayHours;
   let hours = Math.floor(remainderHours);
   let minutes = Math.round((remainderHours - hours) * 60);
   if (minutes === 60) {
     minutes = 0;
     hours += 1;
   }
-  return days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m`;
+  const sign = negative ? '-' : '';
+  return days > 0 ? `${sign}${days}d ${hours}h ${minutes}m` : `${sign}${hours}h ${minutes}m`;
 }
 
 export interface IrregularAccrualInput {
@@ -125,12 +128,16 @@ function computeFixedPartTimeAccrual(input: FixedPartTimeAccrualInput): AccrualR
   const fullAnnualEntitlement = input.contractedWeeklyHours * STATUTORY_WEEKS;
   const { start: yearStart, end: yearEnd } = leaveYearBounds(periodStart, leaveYear);
 
-  const isFirstLeaveYear = employmentStart.getTime() > yearStart.getTime();
+  const employmentEndForYear = input.employmentEndDate ? parseISODate(input.employmentEndDate) : null;
+  const isPartialLeaveYear =
+    employmentStart.getTime() > yearStart.getTime() ||
+    (employmentEndForYear !== null && employmentEndForYear.getTime() < yearEnd.getTime());
   let entitlementForYear = fullAnnualEntitlement;
-  if (isFirstLeaveYear) {
+  if (isPartialLeaveYear) {
     const daysInYear = daysBetween(yearStart, yearEnd);
     const employedFrom = maxDate(employmentStart, yearStart);
-    const daysEmployedInYear = daysBetween(employedFrom, yearEnd);
+    const employedTo = employmentEndForYear !== null ? minDate(employmentEndForYear, yearEnd) : yearEnd;
+    const daysEmployedInYear = Math.max(0, daysBetween(employedFrom, employedTo));
     entitlementForYear = fullAnnualEntitlement * (daysEmployedInYear / daysInYear);
   }
 

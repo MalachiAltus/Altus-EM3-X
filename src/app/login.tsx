@@ -98,7 +98,7 @@ export default function LoginScreen() {
           </Pressable>
 
           <Link href="/signup" asChild>
-            <Pressable style={({ pressed }) => [styles.signupButton, pressed && styles.buttonPressed]}>
+            <Pressable style={styles.signupButton}>
               <Text style={styles.signupButtonText}>Sign Up</Text>
             </Pressable>
           </Link>

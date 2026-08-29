@@ -43,6 +43,10 @@ export default function HolidayScreen() {
       setError('Enter dates as YYYY-MM-DD.');
       return;
     }
+    if (endDate < startDate) {
+      setError('End date must be on or after the start date.');
+      return;
+    }
     const hoursNum = Number(hours);
     if (!hours || Number.isNaN(hoursNum) || hoursNum <= 0) {
       setError('Enter how many hours this request covers.');

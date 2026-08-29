@@ -38,6 +38,13 @@ export default function HomeScreen() {
   const [reportingSick, setReportingSick] = useState(false);
   const [sickSubmitted, setSickSubmitted] = useState(false);
   const [sickError, setSickError] = useState<string | null>(null);
+  const [swapError, setSwapError] = useState<string | null>(null);
+
+  async function handleSwapRespond(id: string, accept: boolean) {
+    setSwapError(null);
+    const { error } = await respond(id, accept);
+    if (error) setSwapError(error);
+  }
 
   async function handleReportSick() {
     setReportingSick(true);
@@ -99,13 +106,13 @@ export default function HomeScreen() {
                 {s.status === 'pending' ? (
                   <View style={styles.swapActions}>
                     <Pressable
-                      onPress={() => respond(s.id, true)}
+                      onPress={() => handleSwapRespond(s.id, true)}
                       style={({ pressed }) => [styles.acceptButton, pressed && styles.buttonPressed]}
                     >
                       <Text style={styles.acceptText}>Accept</Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => respond(s.id, false)}
+                      onPress={() => handleSwapRespond(s.id, false)}
                       style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}
                     >
                       <Text style={styles.declineText}>Decline</Text>
@@ -114,6 +121,7 @@ export default function HomeScreen() {
                 ) : (
                   <Text style={styles.swapStatus}>You: {s.status.replace('_', ' ')}</Text>
                 )}
+                {swapError && <Text style={styles.error}>{swapError}</Text>}
               </View>
             ))}
           </>

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { IRREGULAR_ACCRUAL_RATE } from '@/lib/engine/accrual';
+import { DEFAULT_STANDARD_DAY_HOURS, STATUTORY_CAP_DAYS, STATUTORY_WEEKS } from '@/lib/engine/accrual';
 import { qualificationStatus, type QualificationStatus } from '@/lib/engine/compliance';
-import { round2, toISODate } from '@/lib/engine/dates';
+import { leaveYearBounds, round2, toISODate } from '@/lib/engine/dates';
 import { supabase } from '@/lib/supabase/client';
 import type { Tables } from '@/lib/supabase/types';
 
@@ -27,10 +27,16 @@ export function useStaffCompliance() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: quals }, { data: timesheets }] = await Promise.all([
+    const { start: yearStart, end: yearEnd } = leaveYearBounds(new Date());
+    const [{ data: profiles }, { data: quals }, { data: timesheets }, { data: contracts }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, role, dob, is_permanent').eq('status', 'active').order('full_name'),
       supabase.from('qualifications').select('*'),
-      supabase.from('timesheets').select('staff_id, worked_minutes'),
+      supabase
+        .from('timesheets')
+        .select('staff_id, worked_minutes, clock_in')
+        .gte('clock_in', yearStart.toISOString())
+        .lt('clock_in', yearEnd.toISOString()),
+      supabase.from('contracts').select('staff_id, type, weekly_hours').order('effective_from', { ascending: false }),
     ]);
 
     const today = toISODate(new Date());
@@ -46,6 +52,13 @@ export function useStaffCompliance() {
           .reduce((sum, t) => sum + (t.worked_minutes ?? 0), 0) / 60
       );
 
+      const contract = (contracts ?? []).find((c) => c.staff_id === p.id);
+      const holidayAllowed = !contract
+        ? 0
+        : contract.type === 'irregular'
+          ? STATUTORY_CAP_DAYS * DEFAULT_STANDARD_DAY_HOURS
+          : round2(Number(contract.weekly_hours ?? 0) * STATUTORY_WEEKS);
+
       return {
         id: p.id,
         full_name: p.full_name,
@@ -56,7 +69,7 @@ export function useStaffCompliance() {
         safeguarding: statusFor('safeguarding'),
         qualifications: mine,
         hoursWorked,
-        holidayAllowed: round2(hoursWorked * IRREGULAR_ACCRUAL_RATE),
+        holidayAllowed,
         dob: p.dob,
         isPermanent: p.is_permanent,
       };

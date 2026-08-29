@@ -17,8 +17,19 @@ function formatDate(iso: string): string {
 }
 
 export default function ApprovalsScreen() {
-  const { absences, swaps, signups, loading, approveAbsence, declineAbsence, approveSwap, declineSwap, approveSignup, declineSignup } =
-    useApprovals();
+  const {
+    absences,
+    swaps,
+    signups,
+    loading,
+    error,
+    approveAbsence,
+    declineAbsence,
+    approveSwap,
+    declineSwap,
+    approveSignup,
+    declineSignup,
+  } = useApprovals();
 
   if (loading) {
     return (
@@ -35,6 +46,12 @@ export default function ApprovalsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Approvals Inbox</Text>
         <Text style={styles.subtitle}>Staff with an expired DBS aren&apos;t counted toward ratio.</Text>
+
+        {error && (
+          <Text style={styles.errorBanner}>
+            Couldn&apos;t load some requests ({error}) — the list below may be incomplete. Pull to refresh or reopen this screen.
+          </Text>
+        )}
 
         {isEmpty && <Text style={styles.emptyText}>Nothing waiting for a decision.</Text>}
 
@@ -126,13 +143,31 @@ function AbsenceCard({
   onDecline,
 }: {
   req: AbsenceApprovalItem;
-  onApprove: () => void;
-  onDecline: () => void;
+  onApprove: () => Promise<{ error?: string }>;
+  onDecline: () => Promise<unknown>;
 }) {
-  const blocked = req.verdict ? !req.verdict.ok : false;
-  const warning = req.verdict && req.verdict.ok && req.verdict.violations.length > 0;
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const verdictError = req.verdict === 'error';
+  const verdict = req.verdict === 'error' ? null : req.verdict;
+  const blocked = verdictError ? true : verdict ? !verdict.ok : false;
+  const warning = !verdictError && verdict && verdict.ok && verdict.violations.length > 0;
   const borderColor = blocked ? colors.danger : warning ? colors.warning : colors.success;
   const bg = blocked ? colors.dangerBg : warning ? colors.warningBg : colors.successBg;
+
+  async function handleApprove() {
+    setError(null);
+    setSubmitting(true);
+    const result = await onApprove();
+    setSubmitting(false);
+    if (result?.error) setError(result.error);
+  }
+
+  async function handleDecline() {
+    setSubmitting(true);
+    await onDecline();
+    setSubmitting(false);
+  }
 
   return (
     <View style={[styles.card, { borderColor }]}>
@@ -143,25 +178,28 @@ function AbsenceCard({
 
       <View style={[styles.verdictBox, { backgroundColor: bg }]}>
         <Text style={[styles.verdictText, { color: borderColor }]}>
-          {!req.verdict
-            ? 'Clear — no scheduled shifts in this date range.'
-            : req.verdict.violations.length === 0
-              ? 'Clear — staffing stays legal.'
-              : req.verdict.violations.map((v) => v.message).join(' ')}
+          {verdictError
+            ? "Couldn't verify staffing for this date range — reopen this screen before approving."
+            : !verdict
+              ? 'Clear — no scheduled shifts in this date range.'
+              : verdict.violations.length === 0
+                ? 'Clear — staffing stays legal.'
+                : verdict.violations.map((v: { message: string }) => v.message).join(' ')}
         </Text>
       </View>
 
-      {blocked && <Text style={styles.assignCoverLink}>Assign cover first</Text>}
+      {blocked && !verdictError && <Text style={styles.assignCoverLink}>Assign cover first</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       <View style={styles.actions}>
         <Pressable
-          onPress={onApprove}
-          disabled={blocked}
+          onPress={handleApprove}
+          disabled={blocked || submitting}
           style={({ pressed }) => [styles.approveButton, blocked && styles.disabledButton, pressed && !blocked && styles.buttonPressed]}
         >
-          <Text style={styles.approveText}>Approve</Text>
+          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.approveText}>Approve</Text>}
         </Pressable>
-        <Pressable onPress={onDecline} style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}>
+        <Pressable onPress={handleDecline} disabled={submitting} style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}>
           <Text style={styles.declineText}>Decline</Text>
         </Pressable>
       </View>
@@ -169,19 +207,67 @@ function AbsenceCard({
   );
 }
 
-function SwapCard({ swap, onApprove, onDecline }: { swap: SwapApprovalItem; onApprove: () => void; onDecline: () => void }) {
+function SwapCard({
+  swap,
+  onApprove,
+  onDecline,
+}: {
+  swap: SwapApprovalItem;
+  onApprove: () => Promise<{ error?: string }>;
+  onDecline: () => Promise<unknown>;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const verdictError = swap.verdict === 'error';
+  const verdict = swap.verdict === 'error' ? null : swap.verdict;
+  const blocked = verdictError ? true : verdict ? !verdict.ok : false;
+  const borderColor = blocked ? colors.danger : colors.border;
+
+  async function handleApprove() {
+    setError(null);
+    setSubmitting(true);
+    const result = await onApprove();
+    setSubmitting(false);
+    if (result?.error) setError(result.error);
+  }
+
+  async function handleDecline() {
+    setSubmitting(true);
+    await onDecline();
+    setSubmitting(false);
+  }
+
   return (
-    <View style={[styles.card, { borderColor: colors.border }]}>
+    <View style={[styles.card, { borderColor }]}>
       <Text style={styles.cardHeader}>
         Swap · {swap.fromName} → {swap.toName}
         {swap.shift ? ` · ${formatDate(swap.shift.shift_date)}` : ''}
       </Text>
       <Text style={styles.swapNote}>Colleague has accepted. Awaiting your final approval.</Text>
+
+      {swap.shift && (
+        <View style={[styles.verdictBox, { backgroundColor: blocked ? colors.dangerBg : colors.successBg }]}>
+          <Text style={[styles.verdictText, { color: blocked ? colors.danger : colors.success }]}>
+            {verdictError
+              ? "Couldn't verify staffing for this shift — reopen this screen before approving."
+              : !verdict || verdict.violations.length === 0
+                ? 'Clear — staffing stays legal.'
+                : verdict.violations.map((v: { message: string }) => v.message).join(' ')}
+          </Text>
+        </View>
+      )}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <View style={styles.actions}>
-        <Pressable onPress={onApprove} style={({ pressed }) => [styles.approveButton, pressed && styles.buttonPressed]}>
-          <Text style={styles.approveText}>Approve</Text>
+        <Pressable
+          onPress={handleApprove}
+          disabled={blocked || submitting}
+          style={({ pressed }) => [styles.approveButton, blocked && styles.disabledButton, pressed && !blocked && styles.buttonPressed]}
+        >
+          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.approveText}>Approve</Text>}
         </Pressable>
-        <Pressable onPress={onDecline} style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}>
+        <Pressable onPress={handleDecline} disabled={submitting} style={({ pressed }) => [styles.declineButton, pressed && styles.buttonPressed]}>
           <Text style={styles.declineText}>Decline</Text>
         </Pressable>
       </View>
@@ -196,6 +282,13 @@ const styles = StyleSheet.create({
   title: { ...type.h2, color: colors.ink },
   subtitle: { ...type.small, color: colors.muted, marginTop: -spacing.sm },
   emptyText: { ...type.body, color: colors.muted },
+  errorBanner: {
+    ...type.small,
+    color: colors.danger,
+    backgroundColor: colors.dangerBg,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+  },
   card: {
     backgroundColor: colors.card,
     borderRadius: radii.md,

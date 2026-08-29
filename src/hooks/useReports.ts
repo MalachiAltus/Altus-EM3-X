@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { leaveYearBounds } from '@/lib/engine/dates';
 import { supabase } from '@/lib/supabase/client';
 import type { Tables } from '@/lib/supabase/types';
 
@@ -19,10 +20,19 @@ export function useReports() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    // "Accrued"/"Taken"/"Hours worked" are this-leave-year figures (matching
+    // what a payroll export should report per period) — `balance` stays a
+    // true running total across all leave years, so its own ledger read is
+    // unbounded and only the year-scoped columns filter by created_at.
+    const { start: yearStart, end: yearEnd } = leaveYearBounds(new Date());
     const [{ data: profiles }, { data: contracts }, { data: timesheets }, { data: ledger }] = await Promise.all([
       supabase.from('profiles').select('id, full_name').eq('status', 'active').order('full_name'),
       supabase.from('contracts').select('staff_id, type').order('effective_from', { ascending: false }),
-      supabase.from('timesheets').select('staff_id, worked_minutes'),
+      supabase
+        .from('timesheets')
+        .select('staff_id, worked_minutes')
+        .gte('clock_in', yearStart.toISOString())
+        .lt('clock_in', yearEnd.toISOString()),
       supabase.from('holiday_ledger').select('staff_id, event, hours, running_balance, created_at').order('created_at'),
     ]);
 
@@ -37,8 +47,12 @@ export function useReports() {
         .reduce((sum, t) => sum + (t.worked_minutes ?? 0), 0);
 
       const myLedger = (ledger ?? []).filter((l) => l.staff_id === p.id);
-      const accrued = myLedger.filter((l) => l.event === 'accrual').reduce((s, l) => s + Number(l.hours), 0);
-      const taken = myLedger.filter((l) => l.event === 'taken').reduce((s, l) => s + Number(l.hours), 0);
+      const thisYearLedger = myLedger.filter((l) => {
+        const created = new Date(l.created_at).getTime();
+        return created >= yearStart.getTime() && created < yearEnd.getTime();
+      });
+      const accrued = thisYearLedger.filter((l) => l.event === 'accrual').reduce((s, l) => s + Number(l.hours), 0);
+      const taken = thisYearLedger.filter((l) => l.event === 'taken').reduce((s, l) => s + Number(l.hours), 0);
       const balance = myLedger.length > 0 ? Number(myLedger[myLedger.length - 1].running_balance) : 0;
 
       return {
