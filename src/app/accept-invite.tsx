@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -16,6 +17,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase/client';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
+// Supabase's invite email always links to this web URL (a custom em3x://
+// scheme isn't reliably clickable from an email client) — tokens arrive as
+// a URL hash fragment, e.g. #access_token=...&refresh_token=.... On native,
+// the same tokens arrive as ordinary query params instead, via the "Open in
+// App" handoff below, which we control (so no hash-fragment convention to
+// match) and which expo-router surfaces through the normal deep-link URL.
+function parseWebHashTokens(): { accessToken: string | null; refreshToken: string | null } {
+  const rawHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+  const params = new URLSearchParams(rawHash);
+  return { accessToken: params.get('access_token'), refreshToken: params.get('refresh_token') };
+}
+
+function isMobileWebBrowser(): boolean {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
 export default function AcceptInviteScreen() {
   const [status, setStatus] = useState<'checking' | 'ready' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
@@ -28,54 +46,69 @@ export default function AcceptInviteScreen() {
   const [surname, setSurname] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
+  const [webTokens, setWebTokens] = useState<{ accessToken: string; refreshToken: string } | null>(null);
+  const nativeIncomingUrl = Linking.useURL();
 
-  useEffect(() => {
-    async function establishSession() {
-      if (Platform.OS !== 'web' || typeof window === 'undefined') {
-        setError("Open the invite link from your email on this device's browser to continue.");
-        setStatus('error');
-        return;
-      }
-      const rawHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
-      const params = new URLSearchParams(rawHash);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      if (!accessToken || !refreshToken) {
-        setError('This invite link is invalid or has expired. Ask your admin to resend it.');
-        setStatus('error');
-        return;
-      }
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (sessionError) {
-        setError(sessionError.message);
-        setStatus('error');
-        return;
-      }
-      setUserId(sessionData.user?.id ?? null);
-
-      // Pre-fill from the signup request's name as a convenience — the
-      // person still has to confirm/edit it in the next step, since that's
-      // the whole point (nobody's typed their own name into this account
-      // until now).
-      if (sessionData.user?.id) {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', sessionData.user.id)
-          .maybeSingle();
-        if (existingProfile?.full_name) {
-          const [first, ...rest] = existingProfile.full_name.trim().split(/\s+/);
-          setFirstName(first ?? '');
-          setSurname(rest.join(' '));
-        }
-      }
-      setStatus('ready');
+  async function finishSessionSetup(accessToken: string, refreshToken: string) {
+    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) {
+      setError(sessionError.message);
+      setStatus('error');
+      return;
     }
-    establishSession();
+    setUserId(sessionData.user?.id ?? null);
+
+    // Pre-fill from the signup request's name as a convenience — the
+    // person still has to confirm/edit it in the next step, since that's
+    // the whole point (nobody's typed their own name into this account
+    // until now).
+    if (sessionData.user?.id) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', sessionData.user.id)
+        .maybeSingle();
+      if (existingProfile?.full_name) {
+        const [first, ...rest] = existingProfile.full_name.trim().split(/\s+/);
+        setFirstName(first ?? '');
+        setSurname(rest.join(' '));
+      }
+    }
+    setStatus('ready');
+  }
+
+  // Web: tokens are in window.location.hash, available immediately on mount.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const { accessToken, refreshToken } = parseWebHashTokens();
+    if (!accessToken || !refreshToken) {
+      setError('This invite link is invalid or has expired. Ask your admin to resend it.');
+      setStatus('error');
+      return;
+    }
+    setWebTokens({ accessToken, refreshToken });
+    finishSessionSetup(accessToken, refreshToken);
   }, []);
+
+  // Native: the deep-link URL (from the "Open in App" handoff below) may
+  // not be available the instant this screen mounts — Linking.useURL()
+  // re-renders once the OS delivers it, so this effect just waits.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (!nativeIncomingUrl) return;
+    const { queryParams } = Linking.parse(nativeIncomingUrl);
+    const accessToken = typeof queryParams?.access_token === 'string' ? queryParams.access_token : null;
+    const refreshToken = typeof queryParams?.refresh_token === 'string' ? queryParams.refresh_token : null;
+    if (!accessToken || !refreshToken) {
+      setError('This invite link is invalid or has expired. Ask your admin to resend it.');
+      setStatus('error');
+      return;
+    }
+    finishSessionSetup(accessToken, refreshToken);
+  }, [nativeIncomingUrl]);
 
   async function handleSetPassword() {
     setError(null);
@@ -194,6 +227,22 @@ export default function AcceptInviteScreen() {
         <Text style={styles.title}>Welcome to EM3 X</Text>
         <Text style={styles.subtitle}>Set a password to finish creating your account.</Text>
 
+        {isMobileWebBrowser() && webTokens && status !== 'error' && (
+          <View style={styles.openInAppBox}>
+            <Pressable
+              onPress={() =>
+                Linking.openURL(
+                  `em3x://accept-invite?access_token=${encodeURIComponent(webTokens.accessToken)}&refresh_token=${encodeURIComponent(webTokens.refreshToken)}`
+                )
+              }
+              style={styles.openInAppButton}
+            >
+              <Text style={styles.openInAppButtonText}>Open in the EM3 X app</Text>
+            </Pressable>
+            <Text style={styles.openInAppHint}>Have the app installed? Tap above. Otherwise, continue below.</Text>
+          </View>
+        )}
+
         {status === 'error' ? (
           <Text style={styles.error}>{error}</Text>
         ) : (
@@ -280,4 +329,16 @@ const styles = StyleSheet.create({
   buttonPressed: { backgroundColor: colors.blueDark },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: colors.white, ...type.bodyBold },
+  openInAppBox: { width: '100%', maxWidth: 360, alignItems: 'center', gap: spacing.xs, marginBottom: spacing.md },
+  openInAppButton: {
+    minHeight: minTapTarget,
+    width: '100%',
+    backgroundColor: colors.navy,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  openInAppButtonText: { color: colors.white, ...type.bodyBold },
+  openInAppHint: { ...type.small, color: colors.muted, textAlign: 'center' },
 });
