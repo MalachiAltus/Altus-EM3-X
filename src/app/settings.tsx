@@ -7,7 +7,7 @@ import { DateDropdown } from '@/components/DateDropdown';
 import { useProfile } from '@/hooks/useProfile';
 import { PRIVACY_POLICY, TERMS } from '@/lib/legal';
 import { supabase } from '@/lib/supabase/client';
-import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
+import { colors, minTapTarget, radii, spacing, type, webContentMaxWidth } from '@/theme/tokens';
 
 const DOB_YEAR_RANGE: [number, number] = [1940, new Date().getFullYear() - 13];
 const DOB_FALLBACK = `${new Date().getFullYear() - 25}-01-01`;
@@ -173,7 +173,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.sm },
+  content: { padding: spacing.lg, gap: spacing.sm, width: '100%', maxWidth: webContentMaxWidth, alignSelf: 'center' },
   sectionTitle: { ...type.h3, color: colors.ink, marginBottom: spacing.xs },
   input: {
     minHeight: minTapTarget,

@@ -57,3 +57,8 @@ export const type = {
 
 // Minimum interactive target size per App Store checklist item #16 (44x44pt).
 export const minTapTarget = 44;
+
+// Caps content width on web so screens don't stretch edge-to-edge in a
+// desktop browser window — every layout here was designed phone-width.
+// Native ignores this (screens are never wider than the device).
+export const webContentMaxWidth = 900;

@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useProfile } from '@/hooks/useProfile';
-import { colors, minTapTarget } from '@/theme/tokens';
+import { colors, minTapTarget, webContentMaxWidth } from '@/theme/tokens';
 
 function BackToStaffLink() {
   return (
@@ -40,7 +40,7 @@ export default function AdminLayout() {
         headerLeft: () => <BackToStaffLink />,
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.muted,
-        sceneStyle: { backgroundColor: colors.background },
+        sceneStyle: { backgroundColor: colors.background, width: '100%', maxWidth: webContentMaxWidth, alignSelf: 'center' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Dashboard', tabBarLabel: 'Dashboard' }} />
