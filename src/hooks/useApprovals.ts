@@ -25,7 +25,7 @@ export interface SwapApprovalItem extends Tables<'swap_requests'> {
 
 export type SignupApprovalItem = Tables<'signup_requests'>;
 
-function toRatioRules(rules: Tables<'ratio_rules'>[]) {
+export function toRatioRules(rules: Tables<'ratio_rules'>[]) {
   return rules.map((r) => ({
     ageMin: r.age_min,
     ageMax: r.age_max,
@@ -34,7 +34,7 @@ function toRatioRules(rules: Tables<'ratio_rules'>[]) {
   }));
 }
 
-async function eligibilityFor(staffIds: string[]) {
+export async function eligibilityFor(staffIds: string[]) {
   const [{ data: staffProfiles, error: profilesErr }, { data: quals, error: qualsErr }] = await Promise.all([
     staffIds.length
       ? supabase.from('profiles').select('id, dob').in('id', staffIds)
@@ -54,7 +54,7 @@ async function eligibilityFor(staffIds: string[]) {
   }));
 }
 
-async function computeVerdictForAbsence(
+export async function computeVerdictForAbsence(
   req: Tables<'absence_requests'>,
   rules: Tables<'ratio_rules'>[]
 ): Promise<Verdict> {
@@ -98,7 +98,7 @@ async function computeVerdictForAbsence(
   return worst;
 }
 
-async function computeVerdictForSwap(
+export async function computeVerdictForSwap(
   shift: Tables<'shifts'> | null,
   assignmentId: string,
   toStaffId: string,

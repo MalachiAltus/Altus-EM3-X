@@ -26,7 +26,7 @@ const REPEAT_WEEK_DAYS = 7;
 // Same-weekday dates, one week apart, that stay within the calendar month
 // of `startISO` — used to auto-repeat a permanent staff member's first
 // week of shifts across the rest of that month.
-function repeatDatesInSameMonth(startISO: string): string[] {
+export function repeatDatesInSameMonth(startISO: string): string[] {
   const start = parseISODate(startISO);
   const month = start.getUTCMonth();
   const year = start.getUTCFullYear();
