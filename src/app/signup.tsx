@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TurnstileWidget, turnstileEnabled } from '@/components/TurnstileWidget';
 import { submitSignupRequest } from '@/hooks/useSignupRequest';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
@@ -22,6 +23,7 @@ export default function SignupScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   async function handleSubmit() {
     setError(null);
@@ -29,8 +31,12 @@ export default function SignupScreen() {
       setError('Enter your full name and email.');
       return;
     }
+    if (turnstileEnabled && !turnstileToken) {
+      setError('Please complete the verification challenge.');
+      return;
+    }
     setSubmitting(true);
-    const { error: submitError } = await submitSignupRequest(fullName.trim(), email.trim());
+    const { error: submitError } = await submitSignupRequest(fullName.trim(), email.trim(), turnstileToken);
     setSubmitting(false);
     if (submitError) {
       setError(submitError);
@@ -84,6 +90,8 @@ export default function SignupScreen() {
                 placeholder="you@em3kidsclub.co.uk"
                 placeholderTextColor={colors.subtle}
               />
+
+              <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
 
               {error && <Text style={styles.error}>{error}</Text>}
 
