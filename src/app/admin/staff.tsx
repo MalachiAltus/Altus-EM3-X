@@ -213,7 +213,7 @@ export default function StaffDirectoryScreen() {
                     {emailSuccess?.id === s.id && <Text style={styles.success}>{emailSuccess.message}</Text>}
                   </View>
 
-                  <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} />
+                  <QualificationEditor staffId={s.id} qualifications={s.qualifications} onSaved={refresh} isAdminView />
                 </>
               )}
             </View>
