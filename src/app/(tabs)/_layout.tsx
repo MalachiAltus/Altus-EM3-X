@@ -2,6 +2,7 @@ import { Link, Redirect, Tabs } from 'expo-router';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useProfile } from '@/hooks/useProfile';
 import { useSession } from '@/lib/auth/SessionProvider';
 import { colors, minTapTarget, webContentMaxWidth } from '@/theme/tokens';
 
@@ -16,9 +17,10 @@ function SettingsLink() {
 }
 
 export default function TabsLayout() {
-  const { session, loading } = useSession();
+  const { session, loading: sessionLoading } = useSession();
+  const { profile, loading: profileLoading } = useProfile();
 
-  if (loading) {
+  if (sessionLoading || (session && profileLoading)) {
     return (
       <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator color={colors.navy} />
@@ -28,6 +30,10 @@ export default function TabsLayout() {
 
   if (!session) {
     return <Redirect href="/login" />;
+  }
+
+  if (profile && profile.approval_status !== 'approved') {
+    return <Redirect href="/pending-approval" />;
   }
 
   return (

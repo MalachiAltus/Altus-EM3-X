@@ -13,13 +13,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DateDropdown } from '@/components/DateDropdown';
 import { TurnstileWidget, turnstileEnabled } from '@/components/TurnstileWidget';
 import { submitSignupRequest } from '@/hooks/useSignupRequest';
 import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 
+const DOB_YEAR_RANGE: [number, number] = [1940, new Date().getFullYear() - 13];
+const DOB_FALLBACK = `${new Date().getFullYear() - 25}-01-01`;
+
 export default function SignupScreen() {
   const [fullName, setFullName] = useState('');
+  const [dob, setDob] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -27,8 +34,16 @@ export default function SignupScreen() {
 
   async function handleSubmit() {
     setError(null);
-    if (!fullName.trim() || !email.trim()) {
-      setError('Enter your full name and email.');
+    if (!fullName.trim() || !email.trim() || !dob) {
+      setError('Enter your full name, date of birth, and email.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
     if (turnstileEnabled && !turnstileToken) {
@@ -36,7 +51,13 @@ export default function SignupScreen() {
       return;
     }
     setSubmitting(true);
-    const { error: submitError } = await submitSignupRequest(fullName.trim(), email.trim(), turnstileToken);
+    const { error: submitError } = await submitSignupRequest(
+      fullName.trim(),
+      email.trim(),
+      password,
+      dob,
+      turnstileToken
+    );
     setSubmitting(false);
     if (submitError) {
       setError(submitError);
@@ -54,8 +75,8 @@ export default function SignupScreen() {
           <View style={styles.form}>
             <Text style={styles.title}>Request sent</Text>
             <Text style={styles.subtitle}>
-              An admin needs to approve your request. You&apos;ll get an email invite to set your password once
-              they do.
+              An admin needs to approve your request. Once they do, come back and log in with the email and
+              password you just set.
             </Text>
             <Link href="/login" asChild>
               <Pressable style={styles.button}>
@@ -79,6 +100,9 @@ export default function SignupScreen() {
                 placeholderTextColor={colors.subtle}
               />
 
+              <Text style={styles.label}>Date of birth</Text>
+              <DateDropdown value={dob} onChange={setDob} fallback={DOB_FALLBACK} yearRange={DOB_YEAR_RANGE} />
+
               <Text style={styles.label}>Email</Text>
               <TextInput
                 style={styles.input}
@@ -88,6 +112,30 @@ export default function SignupScreen() {
                 autoComplete="email"
                 keyboardType="email-address"
                 placeholder="you@em3kidsclub.co.uk"
+                placeholderTextColor={colors.subtle}
+              />
+
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+                autoComplete="new-password"
+                secureTextEntry
+                placeholder="At least 8 characters"
+                placeholderTextColor={colors.subtle}
+              />
+
+              <Text style={styles.label}>Confirm password</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                autoCapitalize="none"
+                autoComplete="new-password"
+                secureTextEntry
+                placeholder="Re-enter your password"
                 placeholderTextColor={colors.subtle}
               />
 

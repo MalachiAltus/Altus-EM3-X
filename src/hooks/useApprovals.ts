@@ -269,12 +269,21 @@ export function useApprovals() {
   }
 
   async function declineSignup(id: string): Promise<{ error?: string }> {
-    const { error } = await supabase
-      .from('signup_requests')
-      .update({ status: 'declined', decided_by: decidedBy, decided_at: new Date().toISOString() })
-      .eq('id', id);
-    if (!error) await refresh();
-    return { error: error?.message };
+    // Unlike the other declines here, this needs a privileged Edge Function:
+    // the applicant's account already exists by the time an admin sees the
+    // request, so declining has to actually delete it, not just flip a
+    // status column the client can update under RLS.
+    const { data, error } = await supabase.functions.invoke('decline-signup', {
+      body: { signup_request_id: id },
+    });
+    if (error) {
+      const context = (error as { context?: Response }).context;
+      const body = await context?.json?.().catch(() => null);
+      return { error: body?.error ?? error.message };
+    }
+    if (data?.error) return { error: data.error as string };
+    await refresh();
+    return {};
   }
 
   return {

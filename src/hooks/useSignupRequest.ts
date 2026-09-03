@@ -3,10 +3,12 @@ import { supabase } from '@/lib/supabase/client';
 export async function submitSignupRequest(
   fullName: string,
   email: string,
+  password: string,
+  dob: string,
   turnstileToken?: string | null
 ): Promise<{ error: string | null }> {
   const { data, error } = await supabase.functions.invoke('submit-signup-request', {
-    body: { full_name: fullName, email, turnstile_token: turnstileToken ?? undefined },
+    body: { full_name: fullName, email, password, dob, turnstile_token: turnstileToken ?? undefined },
   });
   if (error) {
     // supabase-js only puts a generic "non-2xx status code" message on

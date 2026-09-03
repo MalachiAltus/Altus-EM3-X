@@ -33,6 +33,7 @@ function RootLayout() {
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="signup" options={{ headerShown: false }} />
           <Stack.Screen name="accept-invite" options={{ headerShown: false }} />
+          <Stack.Screen name="pending-approval" options={{ headerShown: false }} />
           <Stack.Screen name="privacy" options={{ headerShown: false }} />
           <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         </Stack>
