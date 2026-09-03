@@ -1,0 +1,30 @@
+name: Supabase keep-alive
+
+# Supabase pauses a free-tier project after 7 days with no external API
+# traffic — internal activity (pg_cron jobs, etc.) doesn't count, only real
+# requests through the API gateway do. This pings GoTrue's dedicated health
+# endpoint once a day so that never happens — no RLS/grants involved, and a
+# healthy project always returns 200 here. The anon key below is the same
+# public, client-safe key already shipped in the app's own JS bundle (see
+# src/lib/supabase/client.ts) — it carries no privileged access.
+on:
+  schedule:
+    - cron: '17 6 * * *' # once daily; off-the-hour to avoid GitHub's peak-minute scheduling delays
+  workflow_dispatch: {} # lets you trigger a run manually from the Actions tab to test it
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://liduailyojvtfgvvikro.supabase.co/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          echo "Supabase responded with status $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Expected 200 from Supabase's health endpoint, got $status — the project may already be paused or unreachable."
+            exit 1
+          fi
+        env:
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpZHVhaWx5b2p2dGZndnZpa3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0Mjg4MjEsImV4cCI6MjEwMzAwNDgyMX0.0cuYrq0JdzMo3-fcibNzWtAigvGkSRx9Ot3QQ2m0ML0
