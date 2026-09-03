@@ -23,6 +23,16 @@ import { colors, minTapTarget, radii, spacing, type } from '@/theme/tokens';
 // the same tokens arrive as ordinary query params instead, via the "Open in
 // App" handoff below, which we control (so no hash-fragment convention to
 // match) and which expo-router surfaces through the normal deep-link URL.
+//
+// The email template wraps Supabase's real one-time verify link as a
+// ?confirmation_url= query param on THIS page, rather than linking to it
+// directly (see the "gate" step below). Many mail providers prefetch/scan
+// links in incoming email for safety — a direct link to Supabase's verify
+// endpoint gets silently consumed by that scan before the person ever
+// taps it, so they land here with no tokens and a confusing "invalid or
+// expired" error despite never having clicked anything themselves. Routing
+// through this page first means the one-time link is only ever actually
+// visited by an explicit button tap, which a prefetch bot doesn't do.
 function parseWebHashTokens(): { accessToken: string | null; refreshToken: string | null } {
   const rawHash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
   const params = new URLSearchParams(rawHash);
@@ -35,8 +45,9 @@ function isMobileWebBrowser(): boolean {
 }
 
 export default function AcceptInviteScreen() {
-  const [status, setStatus] = useState<'checking' | 'ready' | 'error'>('checking');
+  const [status, setStatus] = useState<'checking' | 'gate' | 'ready' | 'error'>('checking');
   const [error, setError] = useState<string | null>(null);
+  const [gateUrl, setGateUrl] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -80,17 +91,28 @@ export default function AcceptInviteScreen() {
     setStatus('ready');
   }
 
-  // Web: tokens are in window.location.hash, available immediately on mount.
+  // Web: tokens are in window.location.hash, available immediately on mount
+  // *if* Supabase's verify link was already visited (either because the
+  // email template links here directly, or because the gate button below
+  // was just tapped). Otherwise, look for the ?confirmation_url= gate.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const { accessToken, refreshToken } = parseWebHashTokens();
-    if (!accessToken || !refreshToken) {
-      setError('This invite link is invalid or has expired. Ask your admin to resend it.');
-      setStatus('error');
+    if (accessToken && refreshToken) {
+      setWebTokens({ accessToken, refreshToken });
+      finishSessionSetup(accessToken, refreshToken);
       return;
     }
-    setWebTokens({ accessToken, refreshToken });
-    finishSessionSetup(accessToken, refreshToken);
+
+    const confirmationUrl = new URLSearchParams(window.location.search).get('confirmation_url');
+    if (confirmationUrl) {
+      setGateUrl(confirmationUrl);
+      setStatus('gate');
+      return;
+    }
+
+    setError('This invite link is invalid or has expired. Ask your admin to resend it.');
+    setStatus('error');
   }, []);
 
   // Native: the deep-link URL (from the "Open in App" handoff below) may
@@ -157,6 +179,24 @@ export default function AcceptInviteScreen() {
     return (
       <SafeAreaView style={styles.centered}>
         <ActivityIndicator color={colors.navy} />
+      </SafeAreaView>
+    );
+  }
+
+  if (status === 'gate' && gateUrl) {
+    return (
+      <SafeAreaView style={styles.centered}>
+        <Image source={require('../../assets/images/em3-logo.png')} style={styles.logo} contentFit="contain" />
+        <Text style={styles.title}>Welcome to EM3 X</Text>
+        <Text style={styles.subtitle}>Tap below to accept your invite and set a password.</Text>
+        <Pressable
+          onPress={() => {
+            window.location.href = gateUrl;
+          }}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Accept Invite</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
